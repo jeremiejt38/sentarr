@@ -16,14 +16,10 @@ async def health_score(session: Session = Depends(get_session)) -> dict[str, Any
 
     total = len(movies) + len(episodes)
     completed = sum(
-        1
-        for item in list(movies) + list(episodes)
-        if item.overall_status == TaskStatus.COMPLETED
+        1 for item in list(movies) + list(episodes) if item.overall_status == TaskStatus.COMPLETED
     )
     errors = sum(
-        1
-        for item in list(movies) + list(episodes)
-        if item.overall_status == TaskStatus.ERROR
+        1 for item in list(movies) + list(episodes) if item.overall_status == TaskStatus.ERROR
     )
 
     score = round((completed / total) * 100) if total else 100
