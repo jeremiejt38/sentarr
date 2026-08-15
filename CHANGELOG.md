@@ -11,6 +11,15 @@ et ce projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added
 
+- Connecteur Bazarr : synchronisation des sous-titres par épisode.
+- Endpoint `/api/subtitles` pour lister les pistes de sous-titres.
+- Connecteur Prowlarr : état des indexeurs.
+- Endpoint `/api/indexers` pour lister les indexeurs et leur statut.
+
+## [0.3.0] - 2026-08-15
+
+### Added
+
 - Auth configurable (`none`, `forms`/basic, `external` header).
 - Endpoint `/metrics` au format Prometheus.
 - Middleware `AuthMiddleware` protégeant les routes API.
