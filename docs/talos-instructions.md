@@ -12,11 +12,27 @@ Avant chaque utilisation de Talos (CLI, MCP `talos_*`, soumission de job), **rel
 
 ## Modèles recommandés (12 Go de VRAM)
 
+### Choix par défaut
+
 - **Fast + slow** : `ollama/qwen2.5-coder:14b`.
-  - Tient dans ~9,3 Go de VRAM avec 32 768 tokens de contexte.
-  - Format Q4_K_M, supporte `tools` et `insert`.
-- **À éviter** (trop gros pour 12 Go) : `qwen3-coder:latest` (17,6 Go), `qwen3-coder-next:latest` (49 Go), `qwen2.5-coder:32b` (18,9 Go), `gpt-oss:20b` (13,1 Go).
-- Config `~/.talos/.env` :
+  - Meilleur compromis pour du code dans 12 Go : ~9,3 Go de VRAM, 32 768 tokens de contexte.
+  - Q4_K_M, supporte `tools` et `insert`, rapide en prompt eval.
+
+### Alternatives selon les cas
+
+| Cas | Modèle | Pourquoi | Inconvénient |
+|---|---|---|---|
+| Réponse très rapide, tâche minime | `qwen3:8b` | 5 Go, moins de charge | Pas spécialisé code, génère du *thinking*, moins fiable sur l'édition |
+| Contexte très long, pas spécifiquement code | `mistral-nemo:latest` | 6,7 Go, 1 M de contexte | Modèle généraliste, moins bon en génération de code |
+| Contexte long avec code | `deepseek-coder-v2:latest` | 8,4 Go, 163 840 tokens de contexte, bon en code | Q4_0, prompt eval ~2× plus lent, pas de `tools` |
+| Raisonnement général, 14B | `qwen3:14b` | 8,8 Go, 40k contexte, raisonnement | Génère du *thinking*, perturbe Aider, moins bon qu'un modèle code dédié |
+| Si tu montes à 24 Go+ VRAM | `qwen3-coder:latest` (30,5B) | Top actuel en code (SWE-Bench ~69,6%) | 17,6 Go, ne tient pas dans 12 Go |
+| Si tu montes à 48 Go+ VRAM | `qwen3-coder-next:latest` (79,7B MoE) | Meilleur modèle code/agentic disponible | 49 Go, nécessite Ollama récent et beaucoup de VRAM |
+
+- Avec 12 Go, on ne peut pas garder deux modèles en mémoire. Le choix d'un seul modèle (`qwen2.5-coder:14b`) évite les swaps coûteux entre jobs.
+
+### Config `~/.talos/.env`
+
   ```
   TALOS_FAST_LOCAL_MODEL=ollama/qwen2.5-coder:14b
   TALOS_SLOW_LOCAL_MODEL=ollama/qwen2.5-coder:14b
@@ -63,7 +79,7 @@ Avant chaque utilisation de Talos (CLI, MCP `talos_*`, soumission de job), **rel
 
 1. Lire `docs/talos-instructions.md` (ce fichier).
 2. Vérifier le VPN / endpoint Ollama.
-3. Confirmer le modèle actif (`qwen2.5-coder:14b`).
+3. Choisir le modèle adapté (par défaut `qwen2.5-coder:14b`, voir section modèles).
 4. Vérifier `edit-format: diff` dans `~/.aider.conf.yml`.
 5. Choisir `sandbox: true` ou `false` selon le contexte.
 6. Définir `validate_cmd` avec le bon Python.
