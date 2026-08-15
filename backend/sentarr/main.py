@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 
 from sentarr.api import acquisition, alerts, health, logs, metrics, movies, search, shows, summary
 from sentarr.api import websocket as ws_module
+from sentarr.auth import AuthMiddleware
 from sentarr.config import settings
 from sentarr.db import init_db
 from sentarr.tasks.scheduler import start_scheduler
@@ -32,6 +33,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(AuthMiddleware)
 
 app.include_router(movies.router, prefix="/api/movies", tags=["movies"])
 app.include_router(shows.router, prefix="/api/shows", tags=["shows"])
