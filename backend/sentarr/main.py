@@ -1,9 +1,11 @@
 import logging
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from sentarr.api import acquisition, alerts, health, logs, metrics, movies, search, shows, summary
 from sentarr.api import websocket as ws_module
@@ -45,6 +47,16 @@ app.include_router(alerts.router, prefix="/api/alerts", tags=["alerts"])
 app.include_router(health.router, prefix="/api/health", tags=["health"])
 app.include_router(metrics.router, prefix="/metrics", tags=["metrics"])
 app.include_router(ws_module.router, prefix="/ws", tags=["websocket"])
+
+
+static_dir = Path(__file__).resolve().parent / "static"
+if static_dir.exists():
+    app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
+else:
+
+    @app.get("/")
+    async def root() -> dict[str, Any]:
+        return {"status": "ok", "version": "0.3.0", "message": "Frontend static dir not found"}
 
 
 @app.on_event("startup")
