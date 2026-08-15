@@ -22,6 +22,19 @@
 4. **Pas de secrets** dans les prompts, les fichiers générés ou les validations.
 5. **Réessai max 3 fois** par job. En cas d'échec persistant, implémenter manuellement mais continuer à utiliser Talos pour les jobs suivants.
 
+## Découpage des jobs — limite de tokens
+
+- Le modèle `qwen2.5-coder:14b` a une fenêtre de contexte limitée ; un prompt trop gros ou une tâche trop large fait perdre en précision et peut échouer ou dépasser la fenêtre.
+- **Préférer plusieurs petits jobs indépendants** plutôt qu'un seul job monolithique.
+- Chaque job doit viser un objectif atomique (ex : un modèle, un endpoint, un composant, un test) avec sa propre commande de validation.
+- Pour des travaux complexes comme le **Guru**, découper en étapes successives :
+  1. définition du modèle de données,
+  2. API de base,
+  3. logique métier,
+  4. tests,
+  5. composant frontend,
+- Utiliser `talos chain <batch_id>` pour exécuter et relier les étapes sans avoir à les attendre une par une.
+
 ## Rapports
 
 - Consigner chaque utilisation de Talos dans `docs/talos-reports.md`.
