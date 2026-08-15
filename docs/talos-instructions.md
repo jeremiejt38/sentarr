@@ -34,3 +34,30 @@
 - [ ] Vérifier qu'aucun secret/token n'apparaît.
 - [ ] Lancer les tests/linters dans le bon venv.
 - [ ] Mettre à jour `docs/talos-reports.md`.
+- [ ] Évaluer le job avec `talos review <job_id>` si le résultat est notable (note, feedback, motif d'échec).
+
+## Statistiques, review, score et économie de tokens
+
+### Statistiques automatiques
+
+- Talos agrège les exécutions dans `~/.talos/stats.json` :
+  - nombre de runs, statuts, providers, sources ;
+  - validations passées/échouées ;
+  - durée totale et moyenne ;
+  - tokens envoyés/reçus ;
+  - équivalent `devin_offload` (temps + tokens épargnés à Devin).
+- `talos report` génère un rapport Markdown de la file active.
+- `talos status` et `talos dashboard` affichent l'état live.
+
+### Review et score
+
+- `talos review <job_id>` permet d'évaluer un job terminé (score 0–10, feedback, correction optionnelle).
+- La review alimente `LearningStore` pour construire un *negative preamble* (jusqu'à 3 motifs d'échec connus) injecté dans les prompts suivants du même modèle.
+- Le score est **manuel** : Talos ne note pas automatiquement la qualité d'un livrable.
+- `talos chain <batch_id>` permet d'attendre et reviewer une chaîne de jobs.
+
+### Coût
+
+- Avec Ollama local (`ollama/qwen2.5-coder:14b`), le coût d'inférence est nul (hors électricité/infrastructure).
+- Talos ne calcule pas de coût monétaire ; il compte les tokens échangés et estime l'offload de Devin.
+- Si un provider cloud est configuré plus tard, il faudra ajouter le suivi de coût en amont (API key, tarif par token, etc.).

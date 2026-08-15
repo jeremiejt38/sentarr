@@ -12,6 +12,7 @@ Ce document consigne les utilisations de Talos sur le projet Sentarr : prompts, 
 - **Fichiers concernés** : `<chemins>`
 - **Provider** : `<provider>`
 - **Validation** : `<commande>` ✅ / ❌
+- **Score (talos review)** : `<0-10>`
 - **Résultat** : <résumé>
 
 ### Prompt (résumé)
