@@ -124,6 +124,83 @@ Sentarr est structuré en modules backend indépendants, une API REST/WebSocket 
 
 **Implémentation** : Docker unique ou docker-compose backend+frontend.
 
+## Conventions *arr et structure cible
+
+Sentarr adopte les conventions familières des interfaces *arr pour l'intégration Radarr/Sonarr, sans perdre ses spécificités (corrélation Plex, pipeline Importé → Détecté, traitement des métadonnées/artworks).
+
+### Structure de fichiers cible
+
+```text
+backend/sentarr/
+├── api/v1/{movies.py,shows.py,arr.py,health.py}
+├── clients/{radarr.py,sonarr.py,base.py,download.py}
+├── models/{plex.py,arr.py,quality.py,root_folders.py,acquisition.py}
+├── services/{acquisition.py,correlation.py,health_score.py}
+└── schemas/{arr.py,common.py}
+frontend/src/
+├── components/{StatusBadge,ProgressBar,Timeline,TreeView}
+├── features/{movies,shows,acquisition,alerts}
+├── lib/{api.client.ts,arr.types.ts}
+└── styles/theme.css
+```
+
+### Client HTTP read-only
+
+Le client `ArrClient` n'expose volontairement que `get`. Les connecteurs utilisent `GET /api/v3/movie`, `GET /api/v3/series`, `GET /api/v3/queue`, `GET /api/v3/history`, `GET /api/v3/qualityprofile`, `GET /api/v3/rootfolder`, `GET /api/v3/health`.
+
+```python
+# backend/sentarr/clients/base.py
+from typing import Any
+import httpx
+
+class ArrClient:
+    def __init__(self, base_url: str, api_key: str, timeout: float = 10.0) -> None:
+        self._client = httpx.AsyncClient(
+            base_url=base_url.rstrip("/"),
+            timeout=timeout,
+            headers={"X-Api-Key": api_key, "Accept": "application/json"},
+        )
+
+    async def get(self, path: str, **params: Any) -> Any:
+        response = await self._client.get(path, params=params or None)
+        response.raise_for_status()
+        return response.json()
+
+    async def close(self) -> None:
+        await self._client.aclose()
+```
+
+### Configuration structurée
+
+```python
+# backend/sentarr/config.py
+from pydantic import BaseModel, SecretStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+class ArrInstance(BaseModel):
+    name: str
+    url: str
+    api_key: SecretStr
+    profile_label: str | None = None
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    log_level: str = "INFO"
+    arr_poll_interval_seconds: int = 60
+    radarr: list[ArrInstance] = []
+    sonarr: list[ArrInstance] = []
+```
+
+En production, les listes sont assemblées depuis `RADARR_URLS`/`SONARR_URLS` et des variables `*_API_KEY`; aucune valeur secrète n'apparaît dans `.env.example`.
+
+### Contrat de santé et compatibilité API
+
+Trois familles d'endpoints coexistent :
+- `/health` : healthcheck Docker existant.
+- `/api/v1/health` : contrat public versionné (status, version, database, connectors).
+- `/api/movies`, `/api/shows` : compatibilité Sentarr V1.
+- `/api/v1/arr/...` : intégration *arr (V2+).
+
 ## Pipeline unifié bout en bout (V2)
 
 La V2 relie la chaîne d'acquisition Radarr/Sonarr (étapes 1–6) au pipeline de traitement Plex (étapes 7–16) en une seule timeline par item.

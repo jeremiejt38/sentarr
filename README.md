@@ -19,8 +19,9 @@ Donner au gestionnaire d'un serveur Plex (homelab) une vue claire de l'état d'a
 ## Stack
 
 - **Backend** : Python 3.12, FastAPI, SQLModel/SQLAlchemy, Pydantic, APScheduler, `plexapi`, `watchdog`, `apprise` (notifications V2+).
-- **Frontend** : React + Vite + PWA, thème sombre *arr.
+- **Frontend** : React + Vite + PWA, thème sombre *arr (conventions Radarr/Sonarr).
 - **Base de données** : SQLite par défaut en V1, migration transparente vers PostgreSQL possible.
+- **Intégration *arr** : connecteurs read-only Radarr/Sonarr (V2), clients de téléchargement qBittorrent/Transmission, API versionnée `/api/v1/arr`.
 - **Monitoring V3** : export Prometheus `/metrics` + dashboards Grafana.
 - **Déploiement** : Docker / docker-compose sur Unraid, exposé via Traefik sur `sentarr.drac-lab.fr`.
 
