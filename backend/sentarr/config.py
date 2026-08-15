@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     # Auth (V3)
     auth_mode: str = "none"  # none | forms | external
 
+    # Notifications (V3)
+    notification_channels: str = "[]"
+
     # Application
     database_url: str = "sqlite:///app/data/sentarr.db"
     log_level: str = "INFO"

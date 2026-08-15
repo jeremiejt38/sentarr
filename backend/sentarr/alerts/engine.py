@@ -6,6 +6,7 @@ from sqlmodel import Session, select
 
 from sentarr.config import settings
 from sentarr.models.arr import AcquisitionItem, Alert
+from sentarr.notifications.engine import notify
 
 
 class AlertEngine:
@@ -20,8 +21,14 @@ class AlertEngine:
         created.extend(self._check_failed_items())
         for alert in created:
             self.session.add(alert)
+            self._notify(alert)
         self.session.commit()
         return created
+
+    def _notify(self, alert: Alert) -> None:
+        title = f"Sentarr alerte {alert.severity}"
+        body = alert.message
+        notify(title, body, alert.rule)
 
     def _check_stalled_items(self) -> list[Alert]:
         threshold = datetime.now(UTC) - timedelta(minutes=settings.stall_threshold_minutes)
