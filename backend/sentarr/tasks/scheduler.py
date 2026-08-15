@@ -4,6 +4,7 @@ import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore[import-untyped]
 from sqlmodel import Session
 
+from sentarr.alerts.engine import evaluate_alerts
 from sentarr.collectors.arr_sync import sync_acquisition
 from sentarr.collectors.plex_api import sync_libraries
 from sentarr.collectors.plex_log_parser import parse_log_directory
@@ -42,6 +43,16 @@ async def sync_arr_job() -> None:
         logger.exception("*arr sync failed")
 
 
+async def evaluate_alerts_job() -> None:
+    logger.info("Starting alert evaluation")
+    try:
+        with Session(engine) as session:
+            count = len(evaluate_alerts(session))
+            logger.info("Created %s alerts", count)
+    except Exception:
+        logger.exception("Alert evaluation failed")
+
+
 def start_scheduler() -> AsyncIOScheduler:
     init_db()
     scheduler = AsyncIOScheduler()
@@ -64,6 +75,13 @@ def start_scheduler() -> AsyncIOScheduler:
         "interval",
         seconds=settings.arr_poll_interval_seconds,
         id="arr_sync",
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        lambda: asyncio.create_task(evaluate_alerts_job()),
+        "interval",
+        seconds=settings.arr_poll_interval_seconds,
+        id="alert_engine",
         replace_existing=True,
     )
     scheduler.start()

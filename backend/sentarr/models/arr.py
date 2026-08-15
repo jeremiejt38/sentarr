@@ -67,6 +67,24 @@ class AcquisitionEvent(SQLModel, table=True):
     created_at: datetime = Field(default_factory=now_utc)
 
 
+class Alert(SQLModel, table=True):
+    __tablename__ = "alerts"
+    __table_args__ = (
+        Index("ix_alerts_item_type", "target_type", "target_id"),
+        Index("ix_alerts_created_at", "created_at"),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    target_type: str  # acquisition_item | movie | episode
+    target_id: int
+    severity: str  # info | warning | error
+    rule: str
+    message: str
+    resolved: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=now_utc)
+    resolved_at: datetime | None = Field(default=None, nullable=True)
+
+
 def parse_arr_urls(raw: str, default_client_type: ArrClientType) -> list[dict[str, Any]]:
     """Parse a JSON list of *arr instance descriptors from settings."""
     import json
