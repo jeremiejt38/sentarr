@@ -27,6 +27,8 @@ Corps optionnel.
 
 Types autorisés : `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `build`, `ci`, `chore`.
 
+Scopes conseillés : `api`, `arr`, `radarr`, `sonarr`, `queue`, `history`, `quality`, `root-folder`, `correlation`, `plex`, `frontend`, `docs`, `ci`.
+
 Exemples :
 
 ```
@@ -34,6 +36,9 @@ feat(api): ajoute l'endpoint de synthèse globale
 fix(correlator): corrige la propagation du statut saison
 refactor(logs): simplifie le parsing des lignes Plex
 docs(readme): met à jour les variables d'environnement
+feat(arr): ajoute la lecture de la queue Radarr
+fix(correlation): normalise les chemins Windows avant comparaison
+feat(frontend): affiche le badge de profil 4K
 ```
 
 ## Versionnement
@@ -121,40 +126,70 @@ jobs:
       - run: cd frontend && npm ci && npm run lint && npm run test && npm run build
 ```
 
-## Structure du code
+## Structure canonique du code
 
 ```
-backend/
-├── sentarr/
-│   ├── __init__.py
-│   ├── main.py              # point d'entrée FastAPI
-│   ├── config.py            # pydantic-settings
-│   ├── db.py                # SQLModel engine/session
-│   ├── api/
-│   │   ├── movies.py
+backend/sentarr/
+├── __init__.py
+├── main.py                  # point d'entrée FastAPI
+├── config.py                # pydantic-settings (Plex + instances *arr)
+├── db.py                    # SQLModel engine/session
+├── api/
+│   ├── v1/
+│   │   ├── movies.py        # endpoints historiques Sentarr
 │   │   ├── shows.py
-│   │   ├── summary.py
-│   │   └── websocket.py
-│   ├── collectors/
-│   │   ├── plex_api.py
-│   │   ├── plex_log_tail.py
-│   │   └── radarr.py        # V2
-│   ├── correlator/
-│   │   ├── engine.py
-│   │   ├── rules.py
-│   │   └── aggregator.py
-│   ├── models/
-│   │   ├── base.py
-│   │   ├── movies.py
-│   │   └── shows.py
-│   └── tasks/
-│       └── scheduler.py
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   ├── api.ts
-│   ├── websocket.ts
+│   │   ├── arr.py           # endpoints d'intégration *arr (V2+)
+│   │   └── health.py        # contrat public versionné
+│   ├── movies.py            # alias historiques /api/movies
+│   ├── shows.py
+│   ├── summary.py
+│   └── websocket.py
+├── clients/
+│   ├── base.py              # ArrClient read-only
+│   ├── radarr.py
+│   ├── sonarr.py
+│   └── download.py          # qBittorrent/Transmission (V2+)
+├── collectors/
+│   ├── plex_api.py
+│   └── plex_log_tail.py
+├── correlator/
+│   ├── engine.py
+│   ├── rules.py
+│   └── aggregator.py
+├── models/
+│   ├── base.py
+│   ├── plex.py              # movies, shows, seasons, episodes, tasks
+│   ├── arr.py               # external_sources, arr_movies, arr_series, arr_episodes
+│   ├── quality.py           # quality_profiles
+│   ├── root_folders.py      # root_folders
+│   └── acquisition.py       # acquisition_items, acquisition_events
+├── schemas/
+│   ├── common.py
+│   └── arr.py
+├── services/
+│   ├── acquisition.py
+│   ├── correlation.py
+│   └── health_score.py
+└── tasks/
+    ├── scheduler.py
+    └── sync_arr.py
+frontend/src/
+├── components/
+│   ├── StatusBadge/
+│   ├── ProgressBar/
+│   ├── Timeline/
+│   └── TreeView/
+├── features/
+│   ├── movies/
+│   ├── shows/
+│   ├── acquisition/
+│   └── alerts/
+├── lib/
+│   ├── api.client.ts
+│   ├── arr.types.ts
+│   └── websocket.ts
+├── pages/
+├── styles/
 │   └── theme.css
 └── package.json
 docker/
@@ -163,6 +198,71 @@ docker/
 tests/
 ├── backend/
 └── frontend/
+```
+
+## Règles de nommage et de contrat
+
+- Classes et composants : `PascalCase`; fonctions, variables et modules Python : `snake_case`.
+- Composants React : `PascalCase.tsx`; hooks : `useX.ts`; clients : `*.client.ts`; tests : `*.test.tsx`.
+- Modèles persistés : classes singulier Python (`ArrMovie`, `QualityProfile`), tables SQL au pluriel (`arr_movies`, `quality_profiles`).
+- Ressource *arr source : `external_id` + `source_id`; ressource Plex : `plex_rating_key`.
+- API Sentarr historique : `/api/movies`, `/api/shows`; API versionnée nouvelle : `/api/v1/arr/movies`, `/api/v1/arr/series`, `/api/v1/health`.
+- Réponses d'erreur : `{ "detail": "..." }`; ne jamais exposer une clé API ou un token dans les réponses/logs.
+- Migrations : `YYYYMMDD_<verbe>_<objet>.py`.
+
+## Connecteurs
+
+Un connecteur Arr n'expose volontairement que `get`, avec timeout, retry borné et journalisation sans secret. Les routes externes courantes sont `GET /api/v3/movie`, `GET /api/v3/series`, `GET /api/v3/queue`, `GET /api/v3/history`, `GET /api/v3/qualityprofile`, `GET /api/v3/rootfolder` et `GET /api/v3/health` selon le type d'instance.
+
+Exemple de base :
+
+```python
+# backend/sentarr/clients/base.py
+from typing import Any
+import httpx
+
+class ArrClient:
+    def __init__(self, base_url: str, api_key: str, timeout: float = 10.0) -> None:
+        self._client = httpx.AsyncClient(
+            base_url=base_url.rstrip("/"),
+            timeout=timeout,
+            headers={"X-Api-Key": api_key, "Accept": "application/json"},
+        )
+
+    async def get(self, path: str, **params: Any) -> Any:
+        response = await self._client.get(path, params=params or None)
+        response.raise_for_status()
+        return response.json()
+
+    async def close(self) -> None:
+        await self._client.aclose()
+```
+
+## Tests obligatoires
+
+1. Modèles : unicité `(source_id, external_id)` et profils/root folders.
+2. Connecteurs : réponses 200, 401, timeout, payload incomplet, pagination si applicable.
+3. Sécurité : aucun appel POST/PUT/PATCH/DELETE et aucune fuite de secret dans les logs.
+4. Corrélation : chemins, multi-instance, doublons, `unmatched`, liaison Plex.
+5. UI : badge, barre, arborescence, timeline 1–16 et reconnexion WebSocket.
+
+Exemple de test de lecture seule :
+
+```python
+# tests/backend/test_arr_client.py
+import httpx
+import pytest
+from sentarr.clients.base import ArrClient
+
+@pytest.mark.asyncio
+async def test_client_uses_read_only_get(respx_mock):
+    route = respx_mock.get("http://radarr/api/v3/health").mock(
+        return_value=httpx.Response(200, json={"status": "healthy"})
+    )
+    client = ArrClient("http://radarr", "test-key")
+    assert (await client.get("/api/v3/health"))["status"] == "healthy"
+    assert route.called
+    await client.close()
 ```
 
 ## Conventions de code
@@ -179,6 +279,17 @@ tests/
 3. Build Docker réussit.
 4. Revue manuelle si le changement touche au moteur de corrélation, au modèle de données ou à la sécurité.
 5. Pas de secrets dans le diff.
+
+## Definition of Done — intégration *arr
+
+- [ ] Multi-instance Radarr/Sonarr configurable sans collision d'identifiants.
+- [ ] Queue/history affichées avec source, profil, étape, progression et chemin.
+- [ ] Corrélation chemin → Plex traçable, sinon état `unmatched` explicite.
+- [ ] Panne d'une instance *arr isolée et visible dans `/api/v1/health`.
+- [ ] Aucun appel POST/PUT/PATCH/DELETE vers une instance distante.
+- [ ] Aucun secret, URL interne d'infrastructure ou token commité.
+- [ ] Migration réversible et compatibilité des endpoints Sentarr V1 vérifiée.
+- [ ] Revue manuelle obligatoire pour modèle, corrélation, sécurité et migrations.
 
 ## Talos
 

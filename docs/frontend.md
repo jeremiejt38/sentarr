@@ -3,13 +3,53 @@
 ## Stack
 
 - React 18+
-- Vite
+- Vite + PWA (`vite-plugin-pwa`)
 - TypeScript
-- React Router (ou équivalent)
+- React Router
 - WebSocket native
-- PWA (Progressive Web App) : service worker, manifeste, icône, mode hors-ligne partiel
-- CSS Modules ou Tailwind (à valider)
+- CSS Modules (un fichier de style par composant/page)
 - Composants de base maison (thème *arr sombre)
+
+## Direction visuelle
+
+Sentarr reprend les repères familiers des interfaces *arr : thème sombre dense, surfaces anthracite, accent bleu pour l'activité, vert pour l'état prêt, orange pour l'attention et rouge pour l'erreur. Aucun asset de marque Radarr/Sonarr n'est réutilisé.
+
+```css
+/* frontend/src/styles/theme.css */
+:root {
+  --arr-bg: #1f1f1f;
+  --arr-surface: #2b2b2b;
+  --arr-surface-raised: #353535;
+  --arr-border: #454545;
+  --arr-text: #f1f1f1;
+  --arr-muted: #a6a6a6;
+  --arr-blue: #3b9eff;
+  --arr-green: #49b675;
+  --arr-orange: #e5a23c;
+  --arr-red: #e05d5d;
+  --arr-gray: #777;
+  --radius-sm: 4px;
+  --focus-ring: 0 0 0 3px rgb(59 158 255 / 35%);
+}
+body { margin: 0; background: var(--arr-bg); color: var(--arr-text); font: 14px/1.45 system-ui, sans-serif; }
+button, input, select { font: inherit; }
+:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+```
+
+## Contrats TypeScript
+
+```ts
+// frontend/src/lib/arr.types.ts
+export type Status = 'pending' | 'in_progress' | 'completed' | 'error' | 'not_applicable';
+export type AcquisitionStatus = 'queued' | 'downloading' | 'completed' | 'imported' | 'failed' | 'unmatched';
+export type ArrItem = {
+  id: number;
+  title: string;
+  profileLabel?: string;
+  status: AcquisitionStatus;
+  progress?: number;
+};
+```
 
 ## Cas d'usage couverts
 
@@ -98,25 +138,88 @@ Accès rapide aux pages Films, Séries, Acquisition (V2), Alertes (V2).
 
 ## Composants réutilisables
 
-- `StatusBadge` : badge de statut avec couleur.
-- `ProgressBar` : barre de progression avec pourcentage et label.
-- `LoadingIndicator` : spinner rond pour indiquer une tâche en cours.
-- `Timeline` : timeline verticale des étapes.
-- `TreeView` : arborescence dépliable (Série → Saison → Épisode).
-- `ItemCard` : carte poster + titre + badge.
-- `FilterBar` : filtres et recherche.
+### `StatusBadge`
+
+```tsx
+// frontend/src/components/StatusBadge/StatusBadge.tsx
+import type { Status, AcquisitionStatus } from '../../lib/arr.types';
+import './status-badge.css';
+
+type Props = { status: Status | AcquisitionStatus; label?: string };
+const labels: Record<Props['status'], string> = {
+  pending: 'En attente', in_progress: 'En cours', completed: 'Terminé', error: 'Erreur',
+  not_applicable: 'N/A', queued: 'En file', downloading: 'Téléchargement', imported: 'Importé',
+  failed: 'Échec', unmatched: 'Non corrélé',
+};
+export function StatusBadge({ status, label }: Props) {
+  return <span className={`status-badge status-badge--${status}`} role="status">{label ?? labels[status]}</span>;
+}
+```
+
+```css
+/* frontend/src/components/StatusBadge/status-badge.css */
+.status-badge { display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:3px 9px; font-size:12px; font-weight:600; }
+.status-badge::before { width:7px; height:7px; border-radius:50%; background:currentColor; content:""; }
+.status-badge--completed, .status-badge--imported { color:var(--arr-green); background:#214a35; }
+.status-badge--in_progress, .status-badge--downloading { color:var(--arr-blue); background:#173d60; }
+.status-badge--error, .status-badge--failed { color:var(--arr-red); background:#552b2b; }
+.status-badge--pending, .status-badge--queued { color:var(--arr-muted); background:#414141; }
+.status-badge--not_applicable { color:var(--arr-gray); background:#303030; }
+.status-badge--unmatched { color:var(--arr-orange); background:#55421f; }
+```
+
+### `ProgressBar`
+
+```tsx
+// frontend/src/components/ProgressBar/ProgressBar.tsx
+export function ProgressBar({ value, label }: { value: number; label?: string }) {
+  const safe = Math.max(0, Math.min(100, value));
+  return <div className="progress" aria-label={label ?? `${safe}%`}>
+    <div className="progress__track"><div className="progress__value" style={{ width: `${safe}%` }} /></div>
+    <span>{label ?? `${safe}%`}</span>
+  </div>;
+}
+```
+
+```css
+.progress { display:flex; align-items:center; gap:8px; color:var(--arr-muted); min-width:150px; }
+.progress__track { flex:1; height:6px; overflow:hidden; border-radius:3px; background:#444; }
+.progress__value { height:100%; border-radius:inherit; background:var(--arr-blue); transition:width .25s ease; }
+```
+
+### `LoadingIndicator`
+
+Spinner rond rendu uniquement quand au moins une tâche est `in_progress`.
+
+### `TreeView`
+
+Reçoit des nœuds `{id, label, status, progress, children}` ; ouverture locale, navigation clavier (flèches/Entrée), `aria-expanded`. Affiche `Show → Season → Episode` sans changer de page.
+
+### `Timeline`
+
+Reçoit des étapes `{key, label, status, startedAt, completedAt, errorMessage}` ; concatène acquisition (1–6) et Plex (7–16). L'étape `plex_detected` est affichée séparément pour rendre visible le délai Importé → Détecté.
+
+### `ItemCard`
+
+Carte poster + titre + badge + progression, réutilisée dans les listes Films/Séries/Acquisition.
+
+### `FilterBar`
+
+Filtres texte, statut, bibliothèque, instance, `profileLabel`.
 
 ## Palette de couleurs (thème *arr sombre)
 
-- Fond principal : `#1a1a1a` ou équivalent.
-- Surface : `#252525`.
-- Texte : `#eeeeee`.
-- Texte secondaire : `#888888`.
-- Succès (`completed`) : `#4caf50`.
-- En cours (`in_progress`) : `#2196f3`.
-- Erreur (`error`) : `#f44336`.
-- En attente (`pending`) : `#9e9e9e`.
-- Non applicable (`not_applicable`) : `#616161`.
+- Fond principal : `#1f1f1f`.
+- Surface : `#2b2b2b`.
+- Surface raised : `#353535`.
+- Bordure : `#454545`.
+- Texte : `#f1f1f1`.
+- Texte secondaire : `#a6a6a6`.
+- Bleu (`in_progress`/`downloading`) : `#3b9eff`.
+- Vert (`completed`/`imported`) : `#49b675`.
+- Orange (`attention`/`unmatched`) : `#e5a23c`.
+- Rouge (`error`/`failed`) : `#e05d5d`.
+- Gris (`not_applicable`) : `#777`.
 
 ## PWA (Progressive Web App)
 

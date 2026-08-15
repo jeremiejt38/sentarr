@@ -132,9 +132,9 @@ GET /api/logs/events?target_type=movie&target_id=1
 
 Le frontend s'abonne en ouvrant la connexion WebSocket. Pas de topic complexe en V1.
 
-## Endpoints V2
+## Endpoints V2 — Acquisition *arr
 
-### Acquisition
+### Acquisition (alias historiques)
 
 ```
 GET /api/acquisition
@@ -148,6 +148,23 @@ Paramètres `GET /api/acquisition` :
 - `instance_name`
 
 Réponse : items en cours d'acquisition avec statut, progression, health score.
+
+### Endpoints d'intégration *arr (versionnés)
+
+```
+GET /api/v1/arr/movies           # films issus de Radarr
+GET /api/v1/arr/movies/{id}
+GET /api/v1/arr/series           # séries issues de Sonarr
+GET /api/v1/arr/series/{id}
+GET /api/v1/arr/episodes         # épisodes issus de Sonarr
+GET /api/v1/arr/queue            # file d'attente combinée Radarr/Sonarr
+GET /api/v1/arr/history          # historique combiné Radarr/Sonarr
+GET /api/v1/arr/quality-profiles
+GET /api/v1/arr/root-folders
+GET /api/v1/arr/connectors       # état des connecteurs *arr
+```
+
+Réponses : ressources normalisées avec `source_id`, `external_id`, `profile_label` et corrélation Plex quand elle existe.
 
 ### Alertes
 

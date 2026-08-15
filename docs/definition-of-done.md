@@ -16,6 +16,7 @@
 
 ## V2 — Chaîne d'acquisition Radarr/Sonarr
 
+- [ ] Deux instances Radarr/Sonarr peuvent être configurées sans collision d'ID.
 - [ ] Chaque item recherché par Radarr/Sonarr est visible dans la vue Acquisition avec son statut réel et sa progression.
 - [ ] Le support multi-instance est fonctionnel (badge qualité `1080p`, `4K`, etc.).
 - [ ] Chaque item importé apparaît automatiquement relié à son item Plex correspondant, sans intervention manuelle.
@@ -25,6 +26,9 @@
 - [ ] Le webhook générique déclenche une notification vers l'URL configurée lors de l'apparition/résolution d'une alerte.
 - [ ] Aucune action d'écriture n'est effectuée sur Radarr, Sonarr ou Plex.
 - [ ] L'historique des tentatives d'acquisition (release échouée puis nouvelle recherche) reste visible.
+- [ ] Panne d'une instance *arr isolée et visible dans `/api/v1/health` ; le reste de l'application continue de fonctionner.
+- [ ] Aucun secret, URL interne d'infrastructure ou token n'est commité.
+- [ ] Migration réversible et compatibilité des endpoints Sentarr V1 vérifiée.
 
 ## V3 — Extensions
 

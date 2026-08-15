@@ -125,7 +125,14 @@ Tâches propres à la saison (artwork saison, métadonnées saison rares).
 | `correlated_to_type` | str nullable | `movie`, `show`, `season`, `episode` |
 | `correlated_to_id` | int nullable | ID interne Sentarr |
 
-## Tables V2
+## Tables V2 — Intégration *arr
+
+Principes :
+- `id` est toujours l'identifiant interne Sentarr.
+- `(source_id, external_id)` est la clé d'unicité pour une ressource provenant d'une instance *arr.
+- `RootFolder` et `QualityProfile` sont des **snapshots de référence** : la source reste Radarr/Sonarr.
+- Aucun modèle d'acquisition n'autorise une mutation distante.
+- `Movie` et `Show` peuvent être reliés à leur équivalent Plex par `plex_movie_id`/`plex_show_id`, sans confondre leurs identifiants.
 
 ### `external_sources`
 
@@ -133,10 +140,93 @@ Tâches propres à la saison (artwork saison, métadonnées saison rares).
 |-------|------|-------------|
 | `id` | PK int | — |
 | `type` | enum | `radarr`, `sonarr`, `bazarr` (V3), custom |
-| `instance_name` | str | Nom d'affichage |
-| `base_url` | str | URL interne de l'instance |
+| `name` | str | Nom d'affichage, unique par installation |
+| `base_url` | str | URL interne de l'instance (sans secret) |
+| `api_version` | str | ex. `v3` |
 | `api_key_ref` | str | Nom de la variable d'environnement contenant la clé |
 | `profile_label` | str nullable | Badge qualité, ex: `1080p`, `4K` |
+| `enabled` | bool | défaut `true` |
+| `created_at`, `updated_at` | datetime | — |
+
+### `quality_profiles`
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | PK int | — |
+| `source_id` | FK | instance propriétaire |
+| `external_id` | int | ID du profil source |
+| `name` | str | ex: `HD-1080p` |
+| `cutoff_quality` | str nullable | qualité cible |
+| `items` | JSON | qualités autorisées, ordre et poids |
+| `updated_at` | datetime | dernier snapshot |
+
+Contrainte : `UNIQUE(source_id, external_id)`.
+
+### `root_folders`
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | PK int | — |
+| `source_id` | FK | instance propriétaire |
+| `external_id` | int nullable | ID source si fourni |
+| `path` | str | chemin racine canonique |
+| `free_space_bytes` | int nullable | dernier état connu |
+| `accessible` | bool | dernier état connu |
+| `updated_at` | datetime | — |
+
+Contrainte : `UNIQUE(source_id, path)`.
+
+### `arr_movies` (équivalent Radarr `movie`)
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | PK int | identifiant Sentarr |
+| `source_id` | FK | instance Radarr |
+| `external_id` | int | `movie.id` Radarr |
+| `title` | str | titre affiché |
+| `year` | int nullable | année |
+| `tmdb_id`, `imdb_id` | str nullable | identifiants externes |
+| `monitored` | bool | snapshot |
+| `has_file` | bool | snapshot |
+| `path` | str nullable | chemin item |
+| `root_folder_id` | FK nullable | racine associée |
+| `quality_profile_id` | FK nullable | profil associé |
+| `plex_movie_id` | FK nullable | corrélation Sentarr |
+| `updated_at` | datetime | — |
+
+Contrainte : `UNIQUE(source_id, external_id)`.
+
+### `arr_series` (équivalent Sonarr `series`)
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | PK int | identifiant Sentarr |
+| `source_id` | FK | instance Sonarr |
+| `external_id` | int | `series.id` Sonarr |
+| `title` | str | titre |
+| `year` | int nullable | année |
+| `tvdb_id`, `imdb_id`, `tvmaze_id` | str nullable | identifiants externes |
+| `monitored` | bool | snapshot |
+| `path` | str nullable | chemin série |
+| `root_folder_id`, `quality_profile_id` | FK nullable | références |
+| `plex_show_id` | FK nullable | corrélation Plex |
+| `updated_at` | datetime | — |
+
+### `arr_episodes`
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | PK int | — |
+| `series_id` | FK | `arr_series` |
+| `external_id` | int | ID Sonarr |
+| `season_number`, `episode_number` | int | position |
+| `title` | str nullable | titre |
+| `air_date` | date nullable | date de diffusion |
+| `has_file` | bool | snapshot |
+| `path` | str nullable | chemin fichier |
+| `plex_episode_id` | FK nullable | corrélation Plex |
+
+Contrainte : `UNIQUE(series_id, external_id)`.
 
 ### `acquisition_items`
 
@@ -144,11 +234,17 @@ Tâches propres à la saison (artwork saison, métadonnées saison rares).
 |-------|------|-------------|
 | `id` | PK int | — |
 | `source_id` | FK | `external_sources` |
-| `external_id` | str | ID externe (Radarr/Sonarr) |
-| `movie_id` | FK nullable | Lien vers `movies` si film |
-| `episode_id` | FK nullable | Lien vers `episodes` si épisode |
-| `file_path_target` | str nullable | Chemin final attendu après import |
-| `created_at` | datetime | — |
+| `external_id` | str | ID queue/history ou clé stable |
+| `target_type` | enum | `movie`, `series`, `episode` |
+| `target_id` | FK nullable | `arr_movies`/`arr_series`/`arr_episodes` |
+| `status` | enum | `queued`, `downloading`, `completed`, `imported`, `failed`, `unmatched` |
+| `progress_percent` | int nullable | 0–100 |
+| `download_id` | str nullable | ID client, non secret |
+| `path` | str nullable | chemin observé |
+| `profile_label` | str nullable | badge UI |
+| `created_at`, `updated_at` | datetime | — |
+
+Contrainte : `UNIQUE(source_id, external_id)`.
 
 ### `acquisition_events`
 
@@ -156,10 +252,40 @@ Tâches propres à la saison (artwork saison, métadonnées saison rares).
 |-------|------|-------------|
 | `id` | PK int | — |
 | `acquisition_item_id` | FK | Item d'acquisition |
-| `step` | enum | `searched`, `release_found`, `grabbed`, `downloading`, `completed`, `imported` |
+| `step` | enum | `searched`, `release_found`, `grabbed`, `downloading`, `completed`, `imported`, `plex_detected` |
 | `timestamp` | datetime | — |
 | `progress_percent` | int nullable | — |
+| `source_event_id` | str nullable | ID de l'événement source |
 | `extra_data` | JSON nullable | Détails contextuels |
+
+### Schémas d'ingestion (Pydantic)
+
+```python
+from datetime import datetime
+from pydantic import BaseModel, Field
+
+class QueueItem(BaseModel):
+    id: int | str
+    title: str
+    status: str
+    tracked_download_status: str | None = None
+    size: float | None = None
+    sizeleft: float | None = None
+    progress: float | None = Field(default=None, ge=0, le=100)
+    output_path: str | None = None
+
+class HistoryEvent(BaseModel):
+    id: int | str
+    event_type: str
+    source_id: int | None = None
+    movie_id: int | None = None
+    series_id: int | None = None
+    episode_id: int | None = None
+    date: datetime
+    data: dict[str, object] = {}
+```
+
+Les champs absents selon la version d'instance restent optionnels ; l'ingestion valide puis journalise les champs inconnus sans interrompre le polling.
 
 ### `health_scores`
 
@@ -280,7 +406,24 @@ Dérivée de ses saisons + des tâches de niveau série (`show_tasks`) :
 
 ## Indexes recommandés
 
-- `movies(plex_rating_key)`, `shows(plex_rating_key)`, `seasons(plex_rating_key)`, `episodes(plex_rating_key)`
-- `log_events_raw(timestamp, parsed)`
-- `movie_tasks(movie_id, task_type)`, `episode_tasks(episode_id, task_type)`
-- `acquisition_items(source_id, external_id)`
+```sql
+CREATE UNIQUE INDEX uq_external_source_name ON external_sources(name);
+CREATE UNIQUE INDEX uq_quality_profile_source_external ON quality_profiles(source_id, external_id);
+CREATE UNIQUE INDEX uq_root_folder_source_path ON root_folders(source_id, path);
+CREATE UNIQUE INDEX uq_arr_movie_source_external ON arr_movies(source_id, external_id);
+CREATE UNIQUE INDEX uq_arr_series_source_external ON arr_series(source_id, external_id);
+CREATE UNIQUE INDEX uq_arr_episode_series_external ON arr_episodes(series_id, external_id);
+CREATE UNIQUE INDEX uq_acquisition_source_external ON acquisition_items(source_id, external_id);
+CREATE INDEX ix_arr_movies_path ON arr_movies(path);
+CREATE INDEX ix_arr_episodes_path ON arr_episodes(path);
+CREATE INDEX ix_acquisition_status ON acquisition_items(status, updated_at);
+CREATE INDEX ix_movies_plex_rating_key ON movies(plex_rating_key);
+CREATE INDEX ix_shows_plex_rating_key ON shows(plex_rating_key);
+CREATE INDEX ix_seasons_plex_rating_key ON seasons(plex_rating_key);
+CREATE INDEX ix_episodes_plex_rating_key ON episodes(plex_rating_key);
+CREATE INDEX ix_log_events_raw ON log_events_raw(timestamp, parsed);
+CREATE INDEX ix_movie_tasks ON movie_tasks(movie_id, task_type);
+CREATE INDEX ix_episode_tasks ON episode_tasks(episode_id, task_type);
+```
+
+Les chemins sont normalisés avant comparaison (séparateurs, slash final, casse selon le filesystem). En cas d'échec de corrélation, conserver l'état `unmatched` et ne jamais inventer un lien Plex.

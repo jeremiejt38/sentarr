@@ -27,24 +27,27 @@ Toute la configuration passe par des **variables d'environnement**. Aucun fichie
 | `HOST` | Interface d'écoute du backend | `0.0.0.0` |
 | `PORT` | Port d'écoute du backend | `8000` |
 
-## Variables V2
+## Variables V2 — Instances *arr
+
+Les instances Radarr/Sonarr sont configurées par objets structurés. Les secrets (clés API) sont référencés par le nom de leur variable d'environnement, jamais en clair.
 
 | Variable | Description |
 |----------|-------------|
-| `RADARR_URLS` | JSON des instances Radarr : `[{"name":"radarr-1080p","url":"http://radarr:7878","api_key_env":"RADARR_1080P_API_KEY","profile_label":"1080p"}]` |
+| `RADARR_URLS` | JSON : `[{"name":"radarr-1080p","url":"http://radarr:7878","api_key_env":"RADARR_1080P_API_KEY","profile_label":"1080p"}]` |
 | `SONARR_URLS` | Idem pour Sonarr |
-| `ACQUISITION_POLL_INTERVAL_SECONDS` | Intervalle de polling R/S |
-| `STALL_THRESHOLD_MINUTES` | Seuil de détection de blocage acquisition |
-| `WEBHOOK_URL` | URL webhook générique pour les alertes |
+| `RADARR_1080P_API_KEY`, `SONARR_1080P_API_KEY`, etc. | Clés API réelles, passées par env |
+| `ARR_POLL_INTERVAL_SECONDS` | Intervalle de polling R/S | `60` |
+| `STALL_THRESHOLD_MINUTES` | Seuil de détection de blocage acquisition | `30` |
+| `WEBHOOK_URL` | URL webhook générique pour les alertes | — |
 
 ## Variables V3
 
-| Variable | Description |
-|----------|-------------|
-| `BAZAAR_URLS` | JSON des instances Bazarr |
-| `PROWLARR_URLS` | JSON des instances Prowlarr |
-| `AUTH_MODE` | `none`, `forms`, `external` |
-| `NOTIFICATION_CHANNELS` | Configuration Apprise ou webhooks |
+| Variable | Description | Défaut |
+|----------|-------------|--------|
+| `BAZAAR_URLS` | JSON des instances Bazarr | `[]` |
+| `PROWLARR_URLS` | JSON des instances Prowlarr | `[]` |
+| `AUTH_MODE` | `none`, `forms`, `external` | `none` |
+| `NOTIFICATION_CHANNELS` | Configuration Apprise ou webhooks | `[]` |
 | `METRICS_ENABLED` | Activer l'endpoint Prometheus `/metrics` | `false` |
 | `METRICS_PORT` | Port d'exposition des métriques (si distinct) | `8000` |
 | `METRICS_PATH` | Chemin des métriques | `/metrics` |
@@ -76,6 +79,31 @@ PLEX_PASS_ENABLED=auto
 # API backend
 HOST=0.0.0.0
 PORT=8000
+
+# ------------------------------------------------------------------
+# Acquisition — Radarr / Sonarr (V2)
+# ------------------------------------------------------------------
+# Format JSON : [{"name":"radarr-1080p","url":"http://radarr:7878","api_key_env":"RADARR_1080P_API_KEY","profile_label":"1080p"}]
+RADARR_URLS=[]
+SONARR_URLS=[]
+# Clés API correspondant aux valeurs de api_key_env ci-dessus
+# RADARR_1080P_API_KEY=change_me
+# SONARR_1080P_API_KEY=change_me
+ARR_POLL_INTERVAL_SECONDS=60
+STALL_THRESHOLD_MINUTES=30
+WEBHOOK_URL=
+
+# ------------------------------------------------------------------
+# Notifications multi-canaux (V3)
+# ------------------------------------------------------------------
+# Format JSON Apprise : [{"name":"discord","url":"discord://...","events":["alert_triggered"]}]
+NOTIFICATION_CHANNELS=[]
+
+# ------------------------------------------------------------------
+# Authentification (V3)
+# ------------------------------------------------------------------
+# none | forms | external
+AUTH_MODE=none
 
 # ------------------------------------------------------------------
 # Métriques Prometheus / Grafana (V3)

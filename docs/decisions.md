@@ -20,6 +20,12 @@
 | Rétro-scan | `true` par défaut | L'utilisateur souhaite importer l'état existant. |
 | Bibliothèques | Toutes les bibliothèques `movie`/`show` découvertes | Pas de filtre manuel. |
 | Tâches non applicables | Gérées via `not_applicable` | Affichage conditionnel selon Plex Pass et contexte. |
+| API versionnée V2+ | `/api/v1/arr/...` + `/api/v1/health` | Compatibilité *arr sans casser `/api/movies`/`/api/shows`. |
+| Client *arr | `ArrClient` read-only, uniquement `GET` | Aucun appel d'écriture vers Radarr/Sonarr. |
+| Modèles *arr | Classes `ArrMovie`, `ArrSeries`, `ArrEpisode`, `QualityProfile`, `RootFolder` | Tables SQL au pluriel ; clé `(source_id, external_id)`. |
+| Corrélation *arr ↔ Plex | Par chemin normalisé ; état `unmatched` explicite | Ne jamais inventer un lien. |
+| Instances *arr | Multi-instance avec `profile_label` | Badge qualité ex: `1080p`, `4K`. |
+| Structure code | `backend/sentarr/{api/v1,clients,models,schemas,services}` | Aligné sur les conventions *arr. |
 
 ## Modèle Films / Séries
 
