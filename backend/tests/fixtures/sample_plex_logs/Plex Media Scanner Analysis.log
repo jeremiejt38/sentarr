@@ -1,6 +1,8 @@
-Aug 15, 2026 00:07:47.380 [22612577041152] DEBUG - Analyzing media parts for item 99380 (Aller simple pour l'Enfer): 147400
-Aug 15, 2026 00:07:47.526 [22612586757888] DEBUG - Updating part with ID=172834 [/data/tv/Daredevil - Born Again/Saison 1/Daredevil - Born Again - S01E09.mkv]
+Aug 15, 2026 00:07:47.380 [22612577041152] DEBUG - Analyzing media parts for item 99380 (Sample Show S01E09): 147400
+Aug 15, 2026 00:07:47.498 [22612586757888] DEBUG - Analyzing media parts for item 12345 (Sample Movie): 111
+Aug 15, 2026 00:07:47.526 [22612586757888] DEBUG - Updating part with ID=172834 [/data/tv/Sample Show/Saison 1/Sample Show - S01E09.mkv]
 Aug 15, 2026 00:07:47.527 [22612586757888] DEBUG - Part hashes for media item 147400 have changed.
-Aug 15, 2026 00:07:47.528 [22612586757888] DEBUG - [ID 172834] Media part analysis: /data/tv/Daredevil - Born Again/Saison 1/Daredevil - Born Again - S01E09.mkv
-Aug 15, 2026 00:07:47.530 [22612586757888] DEBUG - [MI] Opening input file: "/data/tv/Daredevil - Born Again/Saison 1/Daredevil - Born Again - S01E09.mkv"
+Aug 15, 2026 00:07:47.528 [22612586757888] DEBUG - [ID 172834] Media part analysis: /data/tv/Sample Show/Saison 1/Sample Show - S01E09.mkv
+Aug 15, 2026 00:07:47.530 [22612586757888] DEBUG - [MI] Opening input file: "/data/tv/Sample Show/Saison 1/Sample Show - S01E09.mkv"
 Aug 15, 2026 00:07:48.600 [22612586757888] DEBUG - Updating media item 147400, size=123456789, metadata_item_id=99380
+Aug 15, 2026 00:07:48.610 [22612586757888] DEBUG - Updating part with ID=172835 [/data/movies/Sample Movie.mkv]
