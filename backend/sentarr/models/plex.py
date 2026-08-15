@@ -9,6 +9,7 @@ from sqlmodel import Field, Relationship, SQLModel
 def now_utc() -> datetime:
     return datetime.now(UTC)
 
+
 if TYPE_CHECKING:
     pass
 
@@ -255,12 +256,15 @@ class LogEventRaw(SQLModel, table=True):
     __tablename__ = "log_events_raw"
     __table_args__ = (
         Index("ix_log_events_raw_timestamp_parsed", "timestamp", "parsed"),
+        Index("ix_log_events_raw_line_hash", "line_hash", unique=True),
     )
 
     id: int | None = Field(default=None, primary_key=True)
     raw_line: str
+    line_hash: str
     timestamp: datetime | None = Field(default=None, nullable=True)
     parsed: bool = Field(default=False)
-    target_type: str | None = Field(default=None, nullable=True)
-    target_id: int | None = Field(default=None, nullable=True)
+    parsed_event_type: str | None = Field(default=None, nullable=True)
+    correlated_to_type: str | None = Field(default=None, nullable=True)
+    correlated_to_id: int | None = Field(default=None, nullable=True)
     created_at: datetime = Field(default_factory=now_utc)

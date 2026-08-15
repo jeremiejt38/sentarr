@@ -1,19 +1,31 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from sqlmodel import select
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import text
+from sqlmodel import Session, select
 
 from sentarr.db import get_session
-from sentarr.models.plex import Movie, MovieTask
+from sentarr.models.plex import Movie, MovieTask, TaskStatus
 from sentarr.schemas.common import MovieSummary
 
 router = APIRouter()
 
 
 @router.get("")
-async def list_movies(session: Session = Depends(get_session)) -> list[MovieSummary]:
-    movies = session.exec(select(Movie)).all()  # type: ignore[attr-defined]
+async def list_movies(
+    session: Session = Depends(get_session),
+    library_id: int | None = Query(None),
+    status: TaskStatus | None = Query(None),
+    q: str | None = Query(None),
+) -> list[MovieSummary]:
+    stmt = select(Movie)
+    if library_id is not None:
+        stmt = stmt.where(Movie.library_id == library_id)
+    if status is not None:
+        stmt = stmt.where(Movie.overall_status == status)
+    if q:
+        stmt = stmt.where(text("title LIKE :pattern").bindparams(pattern=f"%{q}%"))
+    movies = session.exec(stmt).all()
     return [
         MovieSummary(
             id=movie.id or 0,
@@ -60,7 +72,7 @@ async def get_movie_timeline(
     movie = session.get(Movie, movie_id)
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
-    tasks = session.exec(select(MovieTask).where(MovieTask.movie_id == movie_id)).all()  # type: ignore[attr-defined]
+    tasks = session.exec(select(MovieTask).where(MovieTask.movie_id == movie_id)).all()
     return {
         "movie_id": movie.id,
         "title": movie.title,

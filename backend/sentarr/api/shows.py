@@ -1,11 +1,12 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlmodel import select
 
 from sentarr.db import get_session
-from sentarr.models.plex import Episode, Season, Show, ShowTask
+from sentarr.models.plex import Episode, Season, Show, ShowTask, TaskStatus
 from sentarr.schemas.common import ShowSummary
 
 router = APIRouter()
@@ -49,8 +50,20 @@ def _season_detail(season: Season) -> dict[str, Any]:
 
 
 @router.get("")
-async def list_shows(session: Session = Depends(get_session)) -> list[ShowSummary]:
-    shows = session.exec(select(Show)).all()  # type: ignore[attr-defined]
+async def list_shows(
+    session: Session = Depends(get_session),
+    library_id: int | None = Query(None),
+    status: TaskStatus | None = Query(None),
+    q: str | None = Query(None),
+) -> list[ShowSummary]:
+    stmt = select(Show)
+    if library_id is not None:
+        stmt = stmt.where(Show.library_id == library_id)
+    if status is not None:
+        stmt = stmt.where(Show.overall_status == status)
+    if q:
+        stmt = stmt.where(text("title LIKE :pattern").bindparams(pattern=f"%{q}%"))
+    shows = session.exec(stmt).all()  # type: ignore
     return [
         ShowSummary(
             id=show.id or 0,
@@ -92,7 +105,7 @@ async def get_show_timeline(
     show = session.get(Show, show_id)
     if not show:
         raise HTTPException(status_code=404, detail="Show not found")
-    show_tasks = session.exec(select(ShowTask).where(ShowTask.show_id == show_id)).all()  # type: ignore[attr-defined]
+    show_tasks = session.exec(select(ShowTask).where(ShowTask.show_id == show_id)).all()  # type: ignore
     return {
         "show_id": show.id,
         "title": show.title,

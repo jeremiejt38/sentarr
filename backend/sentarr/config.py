@@ -17,7 +17,9 @@ class Settings(BaseSettings):
     # Plex
     plex_url: str = "http://plex:32400"
     plex_token: str = Field(default="", description="Plex X-Plex-Token")
-    plex_log_path: str | None = None
+    plex_log_path: str = (
+        "/config/Library/Application Support/Plex Media Server/Logs/Plex Media Server.log"
+    )
 
     # Application
     database_url: str = "sqlite:///app/data/sentarr.db"

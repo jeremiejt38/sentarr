@@ -91,10 +91,7 @@ def sync_libraries(session: Session) -> None:
         section_type: str = section.type
         if section_type not in ("movie", "show"):
             continue
-        if (
-            settings.libraries_filter_list
-            and section.title not in settings.libraries_filter_list
-        ):
+        if settings.libraries_filter_list and section.title not in settings.libraries_filter_list:
             continue
 
         existing = session.exec(  # type: ignore[attr-defined]
@@ -205,9 +202,7 @@ def _sync_shows(session: Session, library: Library, section: Any) -> None:
                         episode_video.locations[0] if episode_video.locations else None
                     )
                     existing_episode.overall_status = status
-                    existing_episode.progress_percent = (
-                        100 if status == TaskStatus.COMPLETED else 0
-                    )
+                    existing_episode.progress_percent = 100 if status == TaskStatus.COMPLETED else 0
                     session.add(existing_episode)
                 else:
                     episode = Episode(

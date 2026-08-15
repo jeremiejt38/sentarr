@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from sentarr.api import movies, shows, summary
+from sentarr.api import logs, movies, search, shows, summary
 from sentarr.api import websocket as ws_module
 from sentarr.config import settings
 from sentarr.db import init_db
@@ -21,8 +21,7 @@ app = FastAPI(
     title="Sentarr",
     version="0.1.0",
     description=(
-        "Dashboard self-hosted de suivi des tâches Plex "
-        "et de la chaîne d'acquisition *arr."
+        "Dashboard self-hosted de suivi des tâches Plex et de la chaîne d'acquisition *arr."
     ),
 )
 
@@ -37,6 +36,8 @@ app.add_middleware(
 app.include_router(movies.router, prefix="/api/movies", tags=["movies"])
 app.include_router(shows.router, prefix="/api/shows", tags=["shows"])
 app.include_router(summary.router, prefix="/api/summary", tags=["summary"])
+app.include_router(search.router, prefix="/api/search", tags=["search"])
+app.include_router(logs.router, prefix="/api/logs", tags=["logs"])
 app.include_router(ws_module.router, prefix="/ws", tags=["websocket"])
 
 
