@@ -126,6 +126,32 @@ Créer un petit fichier `hello.py` contenant une fonction `greet(name: str) -> s
 
 ✅ Réussi — le workflow sécurisé par défaut de Talos fonctionne.
 
+## 2026-08-15 — Ajout du suivi de coût et économies
+
+- **Job ID** : `424930f7`
+- **Label** : `talos-cost-test-2`
+- **Fichiers concernés** : `/tmp/talos-cost-test/greet.py`, `test_greet.py` (sandbox)
+- **Provider** : `ollama/qwen2.5-coder:14b`
+- **Validation** : `/home/jerem/workspace/talos/.venv/bin/python3 -m pytest test_greet.py -q` ✅
+- **Score (talos review)** : 8/10
+- **Résultat** : génération d'une fonction `goodbye` + test ; coût estimé Devin = 0.01573 USD, économies = 0.01573 USD pour 3146 tokens.
+
+### Prompt (résumé)
+
+Test de l'intégration du coût monétaire et du `tokens received` dans `talos/core/stats.py` : ajout de `goodbye` dans `greet.py` et test correspondant.
+
+### Corrections appliquées
+
+- Restauration du calcul de coût issu du stash Git (`39e2b6f`) dans `talos/core/stats.py`.
+- Persistence de `resolved_model` dans `talos/core/daemon.py` pour les agrégations `by_model`.
+- Correction du parsing `tokens received` dans `talos/core/jobs.py`.
+- Affichage des coûts dans `talos report`.
+- Mise à jour de `~/.talos/.env` et de `docs/talos-instructions.md`.
+
+### Évaluation
+
+✅ Réussi — `talos report` affiche les coûts, `~/.talos/stats.json` contient les agrégations par modèle.
+
 ## 2026-08-15 — Test d'appel via MCP
 
 ### 248859a1 — talos-mcp-test
@@ -156,6 +182,8 @@ Créer un petit fichier `hello.py` contenant une fonction `greet(name: str) -> s
 - Format d'édition SEARCH/REPLACE activé (`edit-format: diff` dans `~/.aider.conf.yml`).
 - Sandbox actif par défaut, pas d'écriture directe sur le repo (`TALOS_AUTO_APPLY=false`).
 - Appels MCP fonctionnels : soumission, statut, logs.
+- Review manuelle avec `talos review` : score, feedback, apprentissage.
+- Statistiques et coût monétaire estimé intégrés (Devin/Talos, économies, tokens, `by_model`).
 
 ### Ce qui reste à surveiller ⚠️
 
