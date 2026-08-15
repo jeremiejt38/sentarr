@@ -7,6 +7,18 @@ et ce projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-15
+
+### Added
+
+- Auth configurable (`none`, `forms`/basic, `external` header).
+- Endpoint `/metrics` au format Prometheus.
+- Middleware `AuthMiddleware` protégeant les routes API.
+
+### Changed
+
+- Variables `AUTH_MODE`, `SENTARR_USERNAME`, `SENTARR_PASSWORD` dans `.env.example`.
+
 ## [0.2.0] - 2026-08-15
 
 ### Added
