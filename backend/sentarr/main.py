@@ -17,6 +17,7 @@ from sentarr.api import (
     notifications,
     search,
     shows,
+    subtitles,
     summary,
 )
 from sentarr.api import websocket as ws_module
@@ -58,6 +59,7 @@ app.include_router(alerts.router, prefix="/api/alerts", tags=["alerts"])
 app.include_router(health.router, prefix="/api/health", tags=["health"])
 app.include_router(metrics.router, prefix="/metrics", tags=["metrics"])
 app.include_router(notifications.router, prefix="/api/notifications", tags=["notifications"])
+app.include_router(subtitles.router, prefix="/api/subtitles", tags=["subtitles"])
 app.include_router(ws_module.router, prefix="/ws", tags=["websocket"])
 
 

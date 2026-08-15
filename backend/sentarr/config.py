@@ -31,6 +31,12 @@ class Settings(BaseSettings):
     # Auth (V3)
     auth_mode: str = "none"  # none | forms | external
 
+    # Extensions (V3)
+    bazarr_url: str | None = None
+    bazarr_api_key: str | None = None
+    prowlarr_url: str | None = None
+    prowlarr_api_key: str | None = None
+
     # Notifications (V3)
     notification_channels: str = "[]"
 
