@@ -4,6 +4,7 @@ import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore[import-untyped]
 from sqlmodel import Session
 
+from sentarr.collectors.arr_sync import sync_acquisition
 from sentarr.collectors.plex_api import sync_libraries
 from sentarr.collectors.plex_log_parser import parse_log_directory
 from sentarr.config import settings
@@ -31,6 +32,16 @@ async def parse_plex_logs_job() -> None:
         logger.exception("Plex log parsing failed")
 
 
+async def sync_arr_job() -> None:
+    logger.info("Starting scheduled *arr sync")
+    try:
+        with Session(engine) as session:
+            sync_acquisition(session)
+            logger.info("*arr sync completed")
+    except Exception:
+        logger.exception("*arr sync failed")
+
+
 def start_scheduler() -> AsyncIOScheduler:
     init_db()
     scheduler = AsyncIOScheduler()
@@ -46,6 +57,13 @@ def start_scheduler() -> AsyncIOScheduler:
         "interval",
         seconds=settings.poll_interval_seconds,
         id="plex_log_parse",
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        lambda: asyncio.create_task(sync_arr_job()),
+        "interval",
+        seconds=settings.arr_poll_interval_seconds,
+        id="arr_sync",
         replace_existing=True,
     )
     scheduler.start()
