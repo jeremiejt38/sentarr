@@ -23,6 +23,7 @@ Sentarr est un dashboard self-hosted de suivi de l'avancement des tâches de tra
 ## Talos
 
 - Voir `docs/talos-strategy.md`.
+- **AVERTISSEMENT : avant chaque utilisation de Talos (CLI, MCP `talos_*`, soumission de job), relis `docs/talos-instructions.md`. Si ce fichier n'existe pas encore, crée-le. Confirme dans la réponse que tu as pris connaissance de ces instructions.**
 - Talos est un outil de génération de code auxiliaire : on lui confie des morceaux isolés, on vérifie chaque livrable, on réessaie jusqu'à 3 fois par job, et on continue à l'utiliser pour les jobs suivants même en cas d'échec.
 - On consigne les rapports d'utilisation de Talos pour l'aider à progresser.
 
@@ -42,7 +43,8 @@ sentarr/
 │   ├── deployment.md         ← Docker, Unraid, Traefik
 │   ├── development.md        ← KSP, tests, linting
 │   ├── phases.md             ← plan de développement V1/V2/V3
-│   ├── talos-strategy.md     ← comment utiliser Talos
+│   ├── talos-instructions.md ← consignes d'utilisation avant chaque job Talos
+│   ├── talos-strategy.md     ← stratégie d'utilisation de Talos
 │   ├── notifications.md      ← stratégie de notifications V2/V3
 │   ├── decisions.md          ← décisions de conception et réponses au cadrage
 │   ├── cadrage-questions.md  ← questionnaires V1/V2/V3 et réponses
