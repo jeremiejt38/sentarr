@@ -233,3 +233,29 @@ Test de l'intégration du coût monétaire et du `tokens received` dans `talos/c
 ### Verdict
 
 **Feu vert conditionnel.** Talos est prêt pour des travaux supervisés de refactoring et de génération de code modulaire une fois le daemon correctement configuré. Il n'est pas encore autonome pour des tâches complexes sans revue humaine.
+
+## 2026-08-15 — Sentarr V1 — parseur de logs Plex (échec Talos, implémentation manuelle)
+
+- **Job ID** : `901a6af5`
+- **Label** : `plex-log-parser-v1`
+- **Fichiers concernés** : `backend/sentarr/collectors/plex_log_parser.py`, `backend/tests/test_plex_log_parser.py`, `backend/sentarr/api/logs.py`, `backend/sentarr/api/search.py`, `frontend/src/pages/MovieDetail.tsx`, `frontend/src/pages/ShowDetail.tsx`
+- **Provider** : `ollama/qwen2.5-coder:14b`
+- **Validation** : `uv run pytest tests/test_plex_log_parser.py -q && uv run ruff check sentarr tests && uv run mypy sentarr`
+- **Résultat** : timeout / échec du job Talos ; implémentation manuelle par Devin.
+
+### Diagnostic
+
+- Le prompt était probablement trop long et le timeout de 300 s a été atteint avant que le modèle ne produise de code.
+- Les logs Plex réels ont été analysés au préalable via SSH pour identifier les patterns utiles.
+
+### Action
+
+- Implémentation manuelle du parseur de logs Plex et du moteur de corrélation log ↔ item.
+- Ajout de la deduplication par hash de ligne dans `LogEventRaw`.
+- Ajout des endpoints API `/api/search`, `/api/logs/*` et des pages `MovieDetail` / `ShowDetail`.
+- Validation : 5 tests passent, ruff OK, mypy OK.
+
+### Apprentissages
+
+- Pour les jobs Talos complexes, diviser le travail en prompts plus petits et ciblés.
+- Continuer à utiliser Talos pour des morceaux isolés après cette leçon.
