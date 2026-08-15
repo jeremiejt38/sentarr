@@ -16,6 +16,7 @@ from sentarr.models.arr import (
     now_utc,
     parse_arr_urls,
 )
+from sentarr.models.plex import Episode, Movie
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +85,56 @@ def sync_acquisition(session: Session) -> None:
         except Exception:
             logger.exception("Failed to sync %s", instance.name)
 
+    _correlate_unmatched(session)
     session.commit()
+
+
+def _correlate_unmatched(session: Session) -> int:
+    """Link acquisition items to existing Plex movies/episodes by normalized path."""
+    correlated = 0
+    movies = {m.path: m for m in session.exec(select(Movie)).all() if m.path}
+    episodes = {e.path: e for e in session.exec(select(Episode)).all() if e.path}
+
+    items = session.exec(
+        select(AcquisitionItem).where(AcquisitionItem.correlated_to_type == None)  # noqa: E711
+    ).all()
+
+    for item in items:
+        if item.correlated_to_type is not None or not item.root_folder:
+            continue
+        path = _extract_path(item.raw_data)
+        if not path:
+            continue
+        if path in movies:
+            item.correlated_to_type = "movie"
+            item.correlated_to_id = movies[path].id
+            correlated += 1
+        elif path in episodes:
+            item.correlated_to_type = "episode"
+            item.correlated_to_id = episodes[path].id
+            correlated += 1
+
+    return correlated
+
+
+def _extract_path(raw_data: str | None) -> str | None:
+    if not raw_data:
+        return None
+    try:
+        data = json.loads(raw_data)
+    except json.JSONDecodeError:
+        return None
+    for key in ("movieFile", "episodeFile"):
+        file_data = data.get(key)
+        if isinstance(file_data, dict):
+            rel_path = file_data.get("relativePath") or file_data.get("path")
+            if isinstance(rel_path, str):
+                return rel_path
+    for key in ("path", "folderName"):
+        value = data.get(key)
+        if isinstance(value, str):
+            return value
+    return None
 
 
 def _sync_instance(session: Session, instance: ArrInstance, client: ArrClient) -> None:
