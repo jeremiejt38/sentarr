@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     stall_threshold_minutes: int = 30
     webhook_url: str | None = None
 
+    # Auth (V3)
+    auth_mode: str = "none"  # none | forms | external
+
     # Application
     database_url: str = "sqlite:///app/data/sentarr.db"
     log_level: str = "INFO"
