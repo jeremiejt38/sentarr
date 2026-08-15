@@ -179,6 +179,14 @@ GET /api/v1/openapi.json
 GET /api/v1/docs
 ```
 
+### Métriques Prometheus (V3)
+
+```
+GET /metrics
+```
+
+Exposition au format Prometheus des compteurs d'items par statut, du nombre d'alertes actives, de la durée du polling, etc. Contrôlé par `METRICS_ENABLED`.
+
 ## Codes d'erreur
 
 - `200 OK` : succès.

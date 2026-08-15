@@ -197,7 +197,67 @@ Tâches propres à la saison (artwork saison, métadonnées saison rares).
 
 ## Tables V3
 
-Voir `phases.md` pour le détail. Tables additionnelles : `subtitle_events`, `indexer_status`, `analytics_snapshots`, `plex_servers`, `users`, `plugins`.
+### `subtitle_events` (Bloc A — Bazarr)
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | PK int | — |
+| `movie_id` | FK nullable | Lien film si applicable |
+| `episode_id` | FK nullable | Lien épisode si applicable |
+| `language` | str | Langue demandée (ex: `fra`, `eng`) |
+| `status` | enum | `pending`, `searching`, `found`, `missing`, `error` |
+| `provider` | str nullable | Fournisseur de sous-titres |
+| `timestamp` | datetime | Date de l'événement |
+
+### `indexer_status` (Bloc B — Prowlarr)
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | PK int | — |
+| `indexer_name` | str | Nom de l'indexeur |
+| `health` | enum | `healthy`, `degraded`, `failing` |
+| `last_checked_at` | datetime | Dernier contrôle |
+
+### `analytics_snapshots` (Bloc C — Analytics)
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | PK int | — |
+| `period_start` | datetime | Début de la période |
+| `period_end` | datetime | Fin de la période |
+| `avg_duration_by_step` | JSON | Durée moyenne par étape, par domaine |
+| `anomalies` | JSON | Liste des anomalies détectées |
+| `scope` | enum | `movie`, `episode`, `acquisition` |
+
+### `plex_servers` (Bloc D — Multi-serveur)
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | PK int | — |
+| `name` | str | Nom du serveur |
+| `base_url` | str | URL d'accès |
+| `token_ref` | str | Nom de la variable d'environnement contenant le token |
+
+Ajout d'une colonne `plex_server_id` sur `libraries`, `movies` et `shows`.
+
+### `users` (Bloc E — Auth multi-utilisateur)
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | PK int | — |
+| `username` | str | Nom d'utilisateur |
+| `role` | enum | `admin`, `readonly` |
+| `auth_ref` | str nullable | Référence externe (hash mot de passe, identifiant SSO, etc.) |
+
+### `plugins` (Bloc G — Système de plugins)
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | PK int | — |
+| `name` | str | Nom du plugin |
+| `type` | str | Type de connecteur (`acquisition`, `log_parser`, etc.) |
+| `config` | JSON | Configuration spécifique |
+| `enabled` | bool | Actif ou non |
 
 ## Agrégation des statuts
 

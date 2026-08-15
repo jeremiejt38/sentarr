@@ -61,40 +61,46 @@ NOTIFICATION_CHANNELS='[
 - `new_season_detected` (optionnel)
 - `summary_daily` (optionnel)
 
-## Home Assistant
+## Export Prometheus / Grafana (V3)
 
-Deux options pour exposer Sentarr à Home Assistant :
+Sentarr expose des métriques au format Prometheus pour être scrapé par Prometheus et visualisé dans Grafana.
 
-### Option A — REST générique (recommandée en V3)
-
-Endpoint dédié exposant les valeurs au format attendu par Home Assistant (ou JSON générique interprété par une intégration REST) :
+### Endpoint
 
 ```
-GET /api/home-assistant/sensors
+GET /metrics
 ```
 
-Exemple :
+### Métriques prévues
 
-```json
-{
-  "sentarr_movies_in_progress": 3,
-  "sentarr_movies_error": 1,
-  "sentarr_shows_in_progress": 5,
-  "sentarr_active_alerts": 2
-}
+| Métrique | Type | Description |
+|----------|------|-------------|
+| `sentarr_movies_total` | gauge | Nombre total de films |
+| `sentarr_movies_status{status="..."}` | gauge | Nombre de films par statut |
+| `sentarr_shows_total` | gauge | Nombre total de séries |
+| `sentarr_shows_status{status="..."}` | gauge | Nombre de séries par statut |
+| `sentarr_episodes_total` | gauge | Nombre total d'épisodes |
+| `sentarr_episodes_status{status="..."}` | gauge | Nombre d'épisodes par statut |
+| `sentarr_active_alerts` | gauge | Nombre d'alertes actives |
+| `sentarr_plex_api_poll_duration_seconds` | histogram | Durée du polling API Plex |
+| `sentarr_log_lines_unparsed_total` | counter | Lignes de log non reconnues |
+
+### Dashboards Grafana
+
+Plusieurs dashboards pré-configurés seront fournis dans `grafana/dashboards/` :
+- Vue globale (films + séries + alertes).
+- Vue acquisition (downloads, stall).
+- Vue santé par bibliothèque.
+
+### Configuration
+
+Variables d'environnement (V3) :
+
+```bash
+METRICS_ENABLED=true
+METRICS_PORT=9090
+METRICS_PATH=/metrics
 ```
-
-### Option B — MQTT
-
-Publication périodique sur des topics MQTT :
-
-```
-sentarr/summary/movies_in_progress → 3
-sentarr/summary/movies_error → 1
-sentarr/alerts/active → 2
-```
-
-À activer si l'utilisateur dispose d'un broker MQTT.
 
 ## Règles d'alertes (V2)
 

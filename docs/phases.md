@@ -129,7 +129,7 @@
 
 ## V3 — Extensions
 
-Les blocs V3 sont indépendants. Priorité initiale proposée : notifications avancées + PostgreSQL + auth.
+Les blocs V3 sont indépendants. Priorité initiale proposée : multi-serveur/PostgreSQL, notifications avancées, export Prometheus/Grafana, auth, puis ouverture communautaire.
 
 ### Phase 0 — Cadrage V3
 
@@ -149,6 +149,7 @@ Les blocs V3 sont indépendants. Priorité initiale proposée : notifications av
 
 - Snapshots périodiques.
 - Détection d'anomalies par rapport à la moyenne historique.
+- Purge des événements bruts anciens une fois agrégés.
 
 ### Phase 4 — Multi-serveur / PostgreSQL (Bloc D)
 
@@ -160,18 +161,23 @@ Les blocs V3 sont indépendants. Priorité initiale proposée : notifications av
 - Authentification multi-utilisateur (similaire Radarr/Sonarr).
 - Documentation OpenAPI versionnée.
 
-### Phase 6 — Notifications avancées / Home Assistant (Bloc F)
+### Phase 6 — Notifications avancées (Bloc F1)
 
 - Intégration Apprise pour notifications multi-canaux.
-- Capteurs Home Assistant (REST/MQTT).
+- Connecteurs clients de téléchargement (qBittorrent, Transmission, etc.).
 
-### Phase 7 — Ouverture communautaire (Bloc G)
+### Phase 7 — Export Prometheus / Grafana (Bloc F2)
+
+- Endpoint `/metrics` au format Prometheus.
+- Dashboards Grafana pré-configurés.
+
+### Phase 8 — Ouverture communautaire (Bloc G)
 
 - Publication du repo.
 - Documentation anglaise.
 - Template Unraid Community Applications.
 - Système de plugins.
 
-### Phase 8 — Validation finale
+### Phase 9 — Validation finale
 
 - Déploiement complet en conditions réelles.

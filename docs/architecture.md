@@ -124,6 +124,42 @@ Sentarr est structuré en modules backend indépendants, une API REST/WebSocket 
 
 **Implémentation** : Docker unique ou docker-compose backend+frontend.
 
+## Pipeline unifié bout en bout (V2)
+
+La V2 relie la chaîne d'acquisition Radarr/Sonarr (étapes 1–6) au pipeline de traitement Plex (étapes 7–16) en une seule timeline par item.
+
+```
+[ACQUISITION — Radarr/Sonarr]              [TRAITEMENT PLEX — V1]
+1. Recherché                                 7.  Détecté par Plex
+2. Release trouvée                           8.  Scanné
+3. Grab                                      9.  Identifié
+4. Téléchargement (%)                      10.  Métadonnées
+5. Terminé                                 11.  Artworks
+6. Importé                                 12.  Vignettes BIF
+                                            13.  Marqueurs intro/générique
+                                            14.  Chapitres
+                                            15.  Flux audio/sous-titres
+                                            16.  Prêt
+```
+
+**Point focal** : l'écart entre l'étape 6 (Importé côté *arr) et l'étape 7 (Détecté par Plex) est souvent invisible dans les outils existants. Sentarr le rend visible en premier lieu.
+
+## Positionnement par rapport aux outils existants
+
+### vs Monitarr / Trackarr
+
+| Fonctionnalité | Monitarr | Trackarr | Sentarr V2 |
+|---|---|---|---|
+| Vue file de téléchargement Radarr/Sonarr | ✅ | ✅ | ✅ |
+| Score de santé / détection de blocage | ❌ | ✅ | ✅ |
+| Suivi du traitement Plex après import | ❌ | ❌ | ✅ |
+| Pipeline unifié acquisition → Plex | ❌ | ❌ | ✅ |
+| Distinction films / séries hiérarchique | ❌ | ❌ | ✅ |
+
+### vs Homarr / Organizr (V3)
+
+Homarr et Organizr offrent des dashboards généralistes de l'écosystème *arr (liens, statuts de service). Sentarr ne cherche pas à les remplacer : il apporte un **suivi fin au niveau de chaque fichier**, de la recherche d'indexeur jusqu'aux sous-titres, en passant par le traitement Plex.
+
 ## Modules V2
 
 ### Module V2.1 — Connecteurs Radarr/Sonarr
@@ -133,6 +169,10 @@ Interface commune `AcquisitionConnector`. Support multi-instance. Lecture de `/a
 ### Module V2.2 — Pipeline d'acquisition
 
 Construction de la timeline Recherché → Release → Grab → Téléchargement → Terminé → Importé. Détection de stall.
+
+### Module V2.2b — Connecteurs clients de téléchargement (optionnel V2+)
+
+Interface commune `DownloadClientConnector`. Support de qBittorrent, Transmission et autres clients courants. Permet d'affiner la progression du téléchargement (`progress_percent`) et l'état natif du client. Chaque connecteur renvoie un état normalisé exploité par le pipeline d'acquisition.
 
 ### Module V2.3 — Corrélation Acquisition ↔ Plex
 
@@ -156,4 +196,39 @@ Vue acquisition + pipeline unifié 1–16 étapes + vue alertes.
 
 ## Modules V3
 
-Voir `phases.md`. Les blocs sont indépendants et priorisables : Bazarr, Prowlarr, Analytics, Multi-serveur, Auth, Notifications avancées/Home Assistant, API publique, plugins, ouverture communautaire.
+Voir `phases.md`. Les blocs sont indépendants et priorisables : Bazarr, Prowlarr, Analytics, Multi-serveur, Auth, Notifications avancées, Export Prometheus/Grafana, API publique, plugins, ouverture communautaire.
+
+### Module V3.1 — Connecteur Bazarr (Bloc A)
+
+Interrogation API Bazarr pour l'état de recherche/téléchargement de sous-titres par langue et par item (film ou épisode). Implémente `AcquisitionConnector`.
+
+### Module V3.2 — Connecteur Prowlarr (Bloc B)
+
+État de santé et latence des indexeurs utilisés par Radarr/Sonarr. Affichage croisé avec les alertes d'acquisition.
+
+### Module V3.3 — Analytics (Bloc C)
+
+Agrégations périodiques (temps moyen par étape, détection d'anomalies). Snapshots stockés dans `analytics_snapshots`. Calculs en tâche de fond planifiée.
+
+### Module V3.4 — Multi-serveur Plex / PostgreSQL (Bloc D)
+
+- Support de plusieurs instances Plex (`plex_servers`).
+- Migration transparente vers PostgreSQL via `DATABASE_URL`.
+
+### Module V3.5 — Authentification multi-utilisateur / API publique (Bloc E)
+
+- Mode `none`/`forms`/`external` similaire à Radarr/Sonarr.
+- Rôles `admin` et `readonly`.
+- Documentation OpenAPI versionnée (`/api/v1/`).
+
+### Module V3.6 — Notifications avancées (Bloc F1)
+
+Intégration Apprise Python pour Discord, Telegram, Matrix, Slack, Mattermost, XMPP/Jabber, ntfy, Pushover, Pushbullet, Gotify, Boxcar, email SMTP, Twilio, custom webhooks.
+
+### Module V3.7 — Export Prometheus / Grafana (Bloc F2)
+
+Endpoint `/metrics` au format Prometheus. Dashboards Grafana pré-configurés pour le monitoring global, l'acquisition et la santé par bibliothèque.
+
+### Module V3.8 — Plugins (Bloc G2)
+
+Interface `AcquisitionConnector` formalisée comme point d'extension public. Chargement dynamique des plugins au démarrage.

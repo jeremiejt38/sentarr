@@ -19,8 +19,9 @@ Donner au gestionnaire d'un serveur Plex (homelab) une vue claire de l'état d'a
 ## Stack
 
 - **Backend** : Python 3.12, FastAPI, SQLModel/SQLAlchemy, Pydantic, APScheduler, `plexapi`, `watchdog`, `apprise` (notifications V2+).
-- **Frontend** : React + Vite, thème sombre *arr.
+- **Frontend** : React + Vite + PWA, thème sombre *arr.
 - **Base de données** : SQLite par défaut en V1, migration transparente vers PostgreSQL possible.
+- **Monitoring V3** : export Prometheus `/metrics` + dashboards Grafana.
 - **Déploiement** : Docker / docker-compose sur Unraid, exposé via Traefik sur `sentarr.drac-lab.fr`.
 
 ## Démarrage rapide

@@ -45,8 +45,10 @@ Toute la configuration passe par des **variables d'environnement**. Aucun fichie
 | `PROWLARR_URLS` | JSON des instances Prowlarr |
 | `AUTH_MODE` | `none`, `forms`, `external` |
 | `NOTIFICATION_CHANNELS` | Configuration Apprise ou webhooks |
-| `HOME_ASSISTANT_URL` | URL de l'instance Home Assistant |
-| `HOME_ASSISTANT_TOKEN` | Long-lived access token |
+| `METRICS_ENABLED` | Activer l'endpoint Prometheus `/metrics` | `false` |
+| `METRICS_PORT` | Port d'exposition des métriques (si distinct) | `8000` |
+| `METRICS_PATH` | Chemin des métriques | `/metrics` |
+| `ANALYTICS_RETENTION_DAYS` | Rétention des événements bruts avant agrégation | `90` |
 
 ## Détection de Plex Pass
 
@@ -74,6 +76,14 @@ PLEX_PASS_ENABLED=auto
 # API backend
 HOST=0.0.0.0
 PORT=8000
+
+# ------------------------------------------------------------------
+# Métriques Prometheus / Grafana (V3)
+# ------------------------------------------------------------------
+METRICS_ENABLED=false
+METRICS_PORT=8000
+METRICS_PATH=/metrics
+ANALYTICS_RETENTION_DAYS=90
 ```
 
 ## Secrets

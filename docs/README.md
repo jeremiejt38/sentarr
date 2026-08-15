@@ -22,12 +22,15 @@ Bienvenue dans la documentation du projet Sentarr.
 - [`development.md`](development.md) — KSP, branches, commits, tests, linting.
 - [`phases.md`](phases.md) — plan de développement V1/V2/V3.
 - [`talos-strategy.md`](talos-strategy.md) — comment utiliser Talos sur ce projet.
+- [`talos-reports.md`](talos-reports.md) — rapports d'utilisation de Talos.
 - [`notifications.md`](notifications.md) — stratégie de notifications et alertes.
 - [`decisions.md`](decisions.md) — décisions de conception et réponses au questionnaire de cadrage.
+- [`cadrage-questions.md`](cadrage-questions.md) — questionnaires V1/V2/V3 et réponses.
+- [`definition-of-done.md`](definition-of-done.md) — critères d'acceptation V1/V2/V3.
 
 ## Démarrage rapide
 
-1. Lire [`decisions.md`](decisions.md) pour comprendre les choix du projet.
+1. Lire [`decisions.md`](decisions.md) et [`cadrage-questions.md`](cadrage-questions.md) pour comprendre les choix du projet.
 2. Consulter [`operations.md`](operations.md) pour les informations d'infrastructure.
 3. Suivre [`deployment.md`](deployment.md) pour installer Sentarr.
 4. Se référer à [`development.md`](development.md) pour contribuer au code.
