@@ -39,7 +39,7 @@ class AcquisitionItem(SQLModel, table=True):
 
     id: int | None = Field(default=None, primary_key=True)
     source_id: int = Field(foreign_key="arr_instances.id")
-    external_id: str = Field(index=True)
+    external_id: str
     client_type: ArrClientType
     title: str
     year: int | None = None
