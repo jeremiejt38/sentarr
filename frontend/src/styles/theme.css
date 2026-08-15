@@ -1,0 +1,33 @@
+:root {
+  --arr-bg: #1f1f1f;
+  --arr-surface: #2b2b2b;
+  --arr-surface-raised: #353535;
+  --arr-border: #454545;
+  --arr-text: #f1f1f1;
+  --arr-muted: #a6a6a6;
+  --arr-blue: #3b9eff;
+  --arr-green: #49b675;
+  --arr-orange: #e5a23c;
+  --arr-red: #e05d5d;
+  --arr-gray: #777;
+  --radius-sm: 4px;
+  --focus-ring: 0 0 0 3px rgb(59 158 255 / 35%);
+}
+
+body {
+  margin: 0;
+  background: var(--arr-bg);
+  color: var(--arr-text);
+  font: 14px/1.45 system-ui, sans-serif;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}

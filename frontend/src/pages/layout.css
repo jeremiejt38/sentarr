@@ -1,0 +1,103 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 220px;
+  background: var(--arr-surface);
+  border-right: 1px solid var(--arr-border);
+  padding: 16px;
+}
+
+.sidebar__brand {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: var(--arr-blue);
+}
+
+.sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar__nav a {
+  color: var(--arr-text);
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease;
+}
+
+.sidebar__nav a:hover {
+  background: var(--arr-surface-raised);
+}
+
+.main {
+  flex: 1;
+  padding: 24px;
+}
+
+.page h1 {
+  margin-top: 0;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: var(--arr-surface);
+  border: 1px solid var(--arr-border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+}
+
+.card h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: var(--arr-muted);
+}
+
+.card p {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.card--error p {
+  color: var(--arr-red);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--arr-surface);
+  border: 1px solid var(--arr-border);
+  border-radius: var(--radius-sm);
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid var(--arr-border);
+}
+
+.table th {
+  color: var(--arr-muted);
+  font-weight: 600;
+}
+
+.loading,
+.error {
+  padding: 24px;
+}
+
+.error {
+  color: var(--arr-red);
+}
