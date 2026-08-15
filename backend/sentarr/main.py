@@ -11,6 +11,7 @@ from sentarr.api import (
     acquisition,
     alerts,
     health,
+    indexers,
     logs,
     metrics,
     movies,
@@ -60,6 +61,7 @@ app.include_router(health.router, prefix="/api/health", tags=["health"])
 app.include_router(metrics.router, prefix="/metrics", tags=["metrics"])
 app.include_router(notifications.router, prefix="/api/notifications", tags=["notifications"])
 app.include_router(subtitles.router, prefix="/api/subtitles", tags=["subtitles"])
+app.include_router(indexers.router, prefix="/api/indexers", tags=["indexers"])
 app.include_router(ws_module.router, prefix="/ws", tags=["websocket"])
 
 
