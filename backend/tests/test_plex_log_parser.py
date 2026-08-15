@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlmodel import Session, SQLModel
 
 from sentarr.collectors.plex_log_parser import parse_log_directory
-from sentarr.models.plex import LogEventRaw, Movie
+from sentarr.models.plex import Episode, LogEventRaw, Movie, Season, Show
 
 
 def test_parse_log_directory(tmp_path: Path) -> None:
@@ -48,13 +48,6 @@ def test_parse_log_directory(tmp_path: Path) -> None:
 
 
 def test_parse_log_directory_with_real_fixture() -> None:
-    from pathlib import Path
-
-    from sqlalchemy import create_engine
-    from sqlmodel import Session, SQLModel
-
-    from sentarr.models.plex import Episode, Season, Show
-
     engine = create_engine("sqlite:///:memory:")
     SQLModel.metadata.create_all(engine)
 
@@ -62,9 +55,7 @@ def test_parse_log_directory_with_real_fixture() -> None:
     assert fixture_dir.exists()
 
     with Session(engine) as session:
-        show = Show(
-            library_id=1, plex_rating_key="99999", title="Daredevil - Born Again", year=2026
-        )
+        show = Show(library_id=1, plex_rating_key="99999", title="Sample Show", year=2026)
         session.add(show)
         session.flush()
         season = Season(show_id=show.id, plex_rating_key="99998", season_number=1)
@@ -74,14 +65,21 @@ def test_parse_log_directory_with_real_fixture() -> None:
             season_id=season.id,
             plex_rating_key="99380",
             episode_number=9,
-            title="Straight to Hell",
-            path="/data/tv/Daredevil - Born Again/Saison 1/Daredevil - Born Again - S01E09.mkv",
+            title="Sample Episode",
+            path="/data/tv/Sample Show/Saison 1/Sample Show - S01E09.mkv",
+        )
+        movie = Movie(
+            library_id=1,
+            plex_rating_key="12345",
+            title="Sample Movie",
+            path="/data/movies/Sample Movie.mkv",
         )
         session.add(episode)
+        session.add(movie)
         session.commit()
 
         count = parse_log_directory(session, fixture_dir)
-        assert count == 6
+        assert count == 8
 
         episode_tasks = sorted([t.task_type.value for t in episode.tasks])
         assert "scan" in episode_tasks
