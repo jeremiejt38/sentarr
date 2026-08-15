@@ -7,8 +7,24 @@ et ce projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-08-15
+
 ### Added
 
-- Création du projet Sentarr.
-- Documentation initiale : architecture, modèle de données, API, frontend, déploiement, configuration, plan de développement V1/V2/V3, stratégie Talos, notifications, décisions de conception, informations opérationnelles.
-- Cahier des charges source V1/V2/V3 conservés à la racine du repo.
+- Backend FastAPI avec modèles SQLModel (libraries, movies, shows, seasons, episodes, tasks, raw log events).
+- Collecteur Plex API pour synchroniser les bibliothèques, films et séries.
+- Parseur de logs Plex détectant scan, analyse, deep-analysis, chapitres, crédits, matcher.
+- Moteur de corrélation log ↔ item par `plex_rating_key` ou chemin de fichier.
+- Scheduler APScheduler pour exécuter la synchro Plex et le parsing de logs périodiquement.
+- Endpoints REST : `/api/summary`, `/api/movies`, `/api/shows`, `/api/search`, `/api/logs/*`.
+- Filtres `library_id`, `status`, `q` sur les listes de films et séries.
+- Frontend React + Vite + PWA avec thème sombre *arr.
+- Pages : résumé, films, séries, détails film/série, acquisition, alertes.
+- Composants `StatusBadge`, `ProgressBar`, `Timeline`, `TreeView`.
+- WebSocket basique avec indicateur de connexion dans la barre latérale.
+- Dockerisation avec Dockerfile et docker-compose.
+- Tests backend et frontend, linting (ruff) et type checking (mypy).
+
+### Fixed
+
+- Configuration Vitest déplacée dans `vitest.config.ts` séparé pour corriger le build TypeScript.
