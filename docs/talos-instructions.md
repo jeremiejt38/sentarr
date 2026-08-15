@@ -6,7 +6,12 @@
 
 - Modèle rapide/lent local : `ollama/qwen2.5-coder:14b`.
 - Endpoint Ollama : `http://10.20.0.4:11434` (via VPN AkashaVPN), configuré dans `~/.talos/.env`.
-- Le fallback par défaut dans le code est `http://127.0.0.1:11434` (Ollama local) ; il est surchargé par `~/.talos/.env`.
+- Chaîne de fallback automatique si 10.20.0.4 ne répond pas :
+  1. `10.20.0.4:11434`
+  2. `192.168.1.100:11434`
+  3. `192.168.1.16:11434`
+  4. `127.0.0.1:11434` (dernier recours)
+- Le premier endpoint sain est sélectionné avec un cache de 30 s.
 - Format d'édition Aider : `diff` (SEARCH/REPLACE), activé dans `~/.aider.conf.yml`.
 
 ## Workflow de sécurité
