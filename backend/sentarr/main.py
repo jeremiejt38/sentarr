@@ -7,7 +7,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from sentarr.api import acquisition, alerts, health, logs, metrics, movies, search, shows, summary
+from sentarr.api import (
+    acquisition,
+    alerts,
+    health,
+    logs,
+    metrics,
+    movies,
+    notifications,
+    search,
+    shows,
+    summary,
+)
 from sentarr.api import websocket as ws_module
 from sentarr.auth import AuthMiddleware
 from sentarr.config import settings
@@ -46,7 +57,13 @@ app.include_router(acquisition.router, prefix="/api/acquisition", tags=["acquisi
 app.include_router(alerts.router, prefix="/api/alerts", tags=["alerts"])
 app.include_router(health.router, prefix="/api/health", tags=["health"])
 app.include_router(metrics.router, prefix="/metrics", tags=["metrics"])
+app.include_router(notifications.router, prefix="/api/notifications", tags=["notifications"])
 app.include_router(ws_module.router, prefix="/ws", tags=["websocket"])
+
+
+@app.get("/health")
+async def health_check() -> dict[str, Any]:
+    return {"status": "ok", "version": "0.3.0"}
 
 
 static_dir = Path(__file__).resolve().parent / "static"
@@ -65,11 +82,6 @@ async def startup() -> None:
     init_db()
     logger.info("Database initialized.")
     start_scheduler()
-
-
-@app.get("/health")
-async def health_check() -> dict[str, Any]:
-    return {"status": "ok", "version": "0.1.0"}
 
 
 @app.exception_handler(Exception)

@@ -11,9 +11,7 @@ security = HTTPBasic(auto_error=False)
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         if settings.auth_mode == "none":
             return await call_next(request)
 
