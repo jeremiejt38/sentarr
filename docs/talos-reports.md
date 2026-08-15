@@ -192,6 +192,44 @@ Test de l'intégration du coût monétaire et du `tokens received` dans `talos/c
 - Le provider affiché par `talos providers` indique `ollama/qwen3-coder:latest` (fallback `DEFAULT_MODEL`) alors que les jobs utilisent réellement `qwen2.5-coder:14b` — affichage cosmétique.
 - Le serveur MCP a chargé l'ancienne `.env` en mémoire : il faut le redémarrer pour que `talos_list_providers` reflète la nouvelle config.
 
+## 2026-08-15 — Sentarr V1 — modèles SQLModel (échec)
+
+- **Job ID** : `c764af4f`
+- **Label** : `models-v1`
+- **Fichiers concernés** : `backend/sentarr/models/base.py`, `backend/sentarr/models/plex.py` (jamais écrits par Talos)
+- **Provider** : `ollama/qwen2.5-coder:14b`
+- **Validation** : `uv run pytest tests/test_models.py -q`
+- **Résultat** : échec après 3 tentatives / timeout 300 s.
+
+### Diagnostic
+
+- Le daemon a perdu/rechargé une `.env` sans `OLLAMA_API_BASE` après son redémarrage automatique.
+- Aider n'a pas pu contacter Ollama (`Error getting model info for qwen2.5-coder:14b`) car l'API base n'était pas définie.
+
+### Action
+
+- Implémentation manuelle des modèles SQLModel V1 par Devin.
+- Les modèles ont été testés avec `uv run pytest tests/test_models.py -q` (3 passed).
+
+### Apprentissages
+
+- Avant chaque batch de jobs Talos, redémarrer le daemon explicitement avec `OLLAMA_API_BASE` exporté.
+- Vérifier `talos providers` pour confirmer que le modèle cible est bien résolu.
+
+## 2026-08-15 — Sentarr V1 — frontend Vite PWA (échec)
+
+- **Job ID** : `1bc258f8`
+- **Label** : `frontend-vite-v1`
+- **Fichiers concernés** : `frontend/` (jamais écrits par Talos)
+- **Provider** : `ollama/qwen2.5-coder:14b`
+- **Validation** : `npm install && npm run build`
+- **Résultat** : échec après 3 tentatives / timeout 300 s (même cause Ollama).
+
+### Action
+
+- Initialisation et configuration manuelle du frontend Vite + React + TS + PWA par Devin.
+- Build frontend OK (`npm run build`).
+
 ### Verdict
 
-**Feu vert conditionnel.** Talos est prêt pour des travaux supervisés de refactoring et de génération de code modulaire. Il n'est pas encore autonome pour des tâches complexes sans revue humaine.
+**Feu vert conditionnel.** Talos est prêt pour des travaux supervisés de refactoring et de génération de code modulaire une fois le daemon correctement configuré. Il n'est pas encore autonome pour des tâches complexes sans revue humaine.

@@ -1,0 +1,22 @@
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--arr-muted);
+  min-width: 150px;
+}
+
+.progress__track {
+  flex: 1;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: #444;
+}
+
+.progress__value {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--arr-blue);
+  transition: width 0.25s ease;
+}

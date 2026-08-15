@@ -1,0 +1,37 @@
+services:
+  sentarr:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: sentarr
+    restart: unless-stopped
+    networks:
+      - plex-backend
+    environment:
+      - PLEX_URL=${PLEX_URL:-http://plex:32400}
+      - PLEX_TOKEN=${PLEX_TOKEN}
+      - PLEX_LOG_PATH=${PLEX_LOG_PATH:-/var/log/plex/Plex Media Server.log}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///app/data/sentarr.db}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - POLL_INTERVAL_SECONDS=${POLL_INTERVAL_SECONDS:-60}
+      - LOG_TAIL_INTERVAL_SECONDS=${LOG_TAIL_INTERVAL_SECONDS:-5}
+      - HISTORY_RETENTION_DAYS=${HISTORY_RETENTION_DAYS:-30}
+      - RETRO_SCAN=${RETRO_SCAN:-true}
+      - LIBRARIES_FILTER=${LIBRARIES_FILTER:-}
+      - PLEX_PASS_ENABLED=${PLEX_PASS_ENABLED:-auto}
+      - HOST=0.0.0.0
+      - PORT=8000
+    volumes:
+      - ${SENTARR_DATA:-../data}:/app/data
+      - ${PLEX_LOG_HOST_PATH:-/mnt/user/appdata/plex/Library/Application Support/Plex Media Server/Logs}:/var/log/plex:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sentarr.rule=Host(`sentarr.drac-lab.fr`)"
+      - "traefik.http.routers.sentarr.entrypoints=https"
+      - "traefik.http.routers.sentarr.tls.certresolver=cloudflare"
+      - "traefik.http.routers.sentarr.middlewares=private-network@file"
+      - "traefik.http.services.sentarr.loadbalancer.server.port=8000"
+
+networks:
+  plex-backend:
+    external: true
