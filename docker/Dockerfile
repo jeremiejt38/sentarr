@@ -13,6 +13,7 @@ WORKDIR /app/backend
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 COPY backend/pyproject.toml backend/uv.lock* ./
+COPY backend/README.md ./
 COPY backend/sentarr ./sentarr
 RUN uv sync --no-dev
 
