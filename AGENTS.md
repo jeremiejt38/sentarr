@@ -45,7 +45,10 @@ sentarr/
 │   ├── talos-strategy.md     ← comment utiliser Talos
 │   ├── notifications.md      ← stratégie de notifications V2/V3
 │   ├── decisions.md          ← décisions de conception et réponses au cadrage
-│   └── operations.md         ← infos opérationnelles d'Atlas/Unraid (pas de secrets)
+│   ├── cadrage-questions.md  ← questionnaires V1/V2/V3 et réponses
+│   ├── definition-of-done.md ← critères d'acceptation V1/V2/V3
+│   ├── operations.md         ← infos opérationnelles d'Atlas/Unraid (pas de secrets)
+│   └── talos-reports.md      ← rapports d'utilisation de Talos
 ├── backend/                  ← API FastAPI + modules métier
 ├── frontend/                 ← React/Vite
 ├── docker/                   ← Dockerfiles, docker-compose

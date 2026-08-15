@@ -6,12 +6,15 @@
 |-------|----------|---------------|
 | Nom du projet | **Sentarr** | Remplace `PlexTaskMon` du cahier des charges initial. |
 | Stack backend | Python 3.12 + FastAPI + SQLModel | Familier, bonne performance, ORM léger compatible PostgreSQL. |
-| Stack frontend | React + Vite + TypeScript | Standard, léger, thème sombre *arr. |
+| Stack frontend | React + Vite + TypeScript + PWA | Standard, léger, thème sombre *arr, installable sur mobile/bureau. |
 | Base de données V1 | SQLite par défaut, PostgreSQL possible via `DATABASE_URL` | Usage mono-utilisateur en V1 ; volumétrie des logs/events peut justifier PostgreSQL plus tard. |
 | Auth V1 | Aucune (protection réseau/Traefik/Authelia) | KISS, pas de données utilisateurs. |
 | Auth V3 | Mode similaire à Radarr/Sonarr : `none`, `forms` (JWT), `external` (header HTTP) | Pour l'ouverture communautaire et le multi-utilisateur. |
 | Notifications V2 | Webhook générique | Minimum viable. |
 | Notifications V3 | Apprise Python | Couvre la très large liste de canaux demandée. |
+| Export métriques V3 | Endpoint `/metrics` au format Prometheus + dashboards Grafana | Monitoring compatible avec l'infrastructure existante. |
+| Clients de téléchargement V2+ | Abstraction `DownloadClientConnector` (qBittorrent, Transmission, etc.) | Affiner la progression et l'état natif. |
+| PWA V1 | Application installable avec service worker et manifeste | Mode hors-ligne partiel et accès mobile/bureau. |
 | Polling Plex API | Toutes les 60 secondes par défaut | Réactif sans surcharger Plex. |
 | Log tail | 5 secondes | Lecture continue avec `watchdog`. |
 | Rétro-scan | `true` par défaut | L'utilisateur souhaite importer l'état existant. |
@@ -68,12 +71,29 @@
 
 ## Questions de cadrage V2 — réponses utilisateur
 
-1. **Scope V2** : R/S si nécessaire au bon fonctionnement de la V1 (décision technique). Sinon V1 seule d'abord.
-2. **Instances** : multi-instance avec badge qualité (à détailler avant la V2).
-3. **URLs/clés** : à récupérer via SSH Unraid/Atlas.
+1. **Scope V2** : connecteurs Radarr/Sonarr développés après la V1, sauf si nécessaire au bon fonctionnement de la V1.
+2. **Instances** : multi-instance avec badge qualité (`profile_label` ex: `1080p`, `4K`).
+3. **URLs/clés** : extraites via SSH Unraid/Atlas et passées par variables d'environnement.
+4. **Seuils d'alerte** :
+   - Recherche bloquée (`searched`) : 60 min.
+   - Téléchargement bloqué (`downloading`) : 30 min.
+   - Import bloqué (`importing`) : 15 min.
+   - Traitement Plex bloqué (`overall`) : 60 min.
+5. **Canal de notification V2** : webhook générique.
+6. **Historique alertes résolues** : conservées 90 jours.
+7. **Score de santé** : par item + indicateur global agrégé sur le dashboard.
+8. **Clients de téléchargement** : abstraction `DownloadClientConnector` supportant qBittorrent, Transmission et autres clients courants pour affiner la progression.
 
 ## Questions de cadrage V3 — réponses utilisateur
 
-1. **Priorités** : tous les blocs A–G importants à terme.
-2. **Notifications** : grande variété de canaux → Apprise.
-3. **Auth** : similaire à Radarr/Sonarr (`none`/`forms`/`external`).
+1. **Priorités** : tous les blocs A–G souhaités à terme.
+2. **Intégrations Bazarr/Prowlarr** : Prowlarr en V3, Bazarr en V3.
+3. **Rétention events bruts** : 90 jours avant agrégation/purge.
+4. **PostgreSQL** : pas obligatoire en V1 ; ORM compatible pour migration future.
+5. **Multi-serveur Plex** : prioritaire en V3.
+6. **Authelia** : optionnel côté Sentarr ; mode `external` disponible en V3.
+7. **Rôles** : 2 rôles (`admin`, `readonly`).
+8. **Notifications** : grande variété de canaux via Apprise.
+9. **Export métriques** : Prometheus `/metrics` + dashboards Grafana. Home Assistant hors scope.
+10. **PWA** : oui, dès la V1.
+11. **Publication communautaire** : oui en V3 avec doc anglaise et template Unraid CA.

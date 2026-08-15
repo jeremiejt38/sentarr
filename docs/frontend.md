@@ -7,8 +7,26 @@
 - TypeScript
 - React Router (ou équivalent)
 - WebSocket native
+- PWA (Progressive Web App) : service worker, manifeste, icône, mode hors-ligne partiel
 - CSS Modules ou Tailwind (à valider)
 - Composants de base maison (thème *arr sombre)
+
+## Cas d'usage couverts
+
+Le dashboard doit permettre de répondre aux questions suivantes :
+
+1. **"Ce film que je viens d'ajouter, Plex a-t-il fini de le traiter ou c'est encore en cours ?"**
+   - Page Films / détail film → timeline des 9 étapes.
+2. **"Cette série a 10 saisons, laquelle a des épisodes encore en cours de traitement ?"**
+   - Page Séries → liste des séries avec barre de progression globale → dépliage par saison.
+3. **"Cette saison affiche 22/24 épisodes prêts — que se passe-t-il pour les 2 restants ?"**
+   - Dépliage de la saison → vue épisodes avec statuts individuels.
+4. **"Pourquoi ce film n'a toujours pas d'affiche 3 heures après l'ajout ?"**
+   - Détail film → étape `artwork` en `error` ou `in_progress` avec message/log brut.
+5. **"Combien de fichiers sont actuellement en erreur de métadonnées dans ma bibliothèque ?"**
+   - Page d'accueil / synthèse → compteur d'items en erreur par domaine.
+6. **"Un épisode a-t-il été mal identifié (mauvaise saison/numéro) ?"**
+   - Vue détail épisode ou indicateur d'erreur de matching, visible comme cas d'erreur distinct.
 
 ## Principes UX
 
@@ -99,6 +117,15 @@ Accès rapide aux pages Films, Séries, Acquisition (V2), Alertes (V2).
 - Erreur (`error`) : `#f44336`.
 - En attente (`pending`) : `#9e9e9e`.
 - Non applicable (`not_applicable`) : `#616161`.
+
+## PWA (Progressive Web App)
+
+L'application V1 doit être déployable comme PWA.
+
+- `vite-plugin-pwa` pour générer le service worker.
+- Manifeste `manifest.json` avec nom, icône (à créer), couleur thème sombre.
+- Mise en cache des assets et des dernières données de synthèse pour un mode hors-ligne partiel.
+- Pas de notifications push natives en V1 (notifications push via Apprise en V3).
 
 ## WebSocket
 
