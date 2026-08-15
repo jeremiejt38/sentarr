@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from sentarr.api import acquisition, alerts, logs, movies, search, shows, summary
+from sentarr.api import acquisition, alerts, health, logs, movies, search, shows, summary
 from sentarr.api import websocket as ws_module
 from sentarr.config import settings
 from sentarr.db import init_db
@@ -40,6 +40,7 @@ app.include_router(search.router, prefix="/api/search", tags=["search"])
 app.include_router(logs.router, prefix="/api/logs", tags=["logs"])
 app.include_router(acquisition.router, prefix="/api/acquisition", tags=["acquisition"])
 app.include_router(alerts.router, prefix="/api/alerts", tags=["alerts"])
+app.include_router(health.router, prefix="/api/health", tags=["health"])
 app.include_router(ws_module.router, prefix="/ws", tags=["websocket"])
 
 
@@ -52,7 +53,7 @@ async def startup() -> None:
 
 
 @app.get("/health")
-async def health() -> dict[str, Any]:
+async def health_check() -> dict[str, Any]:
     return {"status": "ok", "version": "0.1.0"}
 
 
