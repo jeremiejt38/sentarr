@@ -56,8 +56,13 @@
 - Le score est **manuel** : Talos ne note pas automatiquement la qualité d'un livrable.
 - `talos chain <batch_id>` permet d'attendre et reviewer une chaîne de jobs.
 
-### Coût
+### Coût / économies
 
-- Avec Ollama local (`ollama/qwen2.5-coder:14b`), le coût d'inférence est nul (hors électricité/infrastructure).
-- Talos ne calcule pas de coût monétaire ; il compte les tokens échangés et estime l'offload de Devin.
-- Si un provider cloud est configuré plus tard, il faudra ajouter le suivi de coût en amont (API key, tarif par token, etc.).
+- Talos calcule un **coût estimé par job** dans `~/.talos/stats.json` :
+  - `cost.estimated_devin_cost_usd` : ce qu'aurait coûté le même volume de tokens en usage Devin/API ;
+  - `cost.estimated_talos_cost_usd` : coût de l'inférence locale (Ollama) ;
+  - `cost.estimated_savings_usd` = Devin − Talos.
+- Le tarif Devin est configurable via `TALOS_DEVIN_COST_PER_1M_TOKENS` (défaut : `5.0` USD / million de tokens).
+- Le coût Talos est configurable via `TALOS_TALOS_COST_PER_1M_TOKENS` (défaut : `0.0` pour Ollama local).
+- Les agrégations sont aussi par modèle dans `by_model`.
+- `talos report` affiche le total et les économies.
