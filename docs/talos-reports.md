@@ -127,16 +127,23 @@ Créer un petit fichier `hello.py` contenant une fonction `greet(name: str) -> s
 
 ## 2026-08-15 — Test d'appel via MCP
 
-- **Job ID** : `248859a1`
-- **Label** : `talos-mcp-test`
+### 248859a1 — talos-mcp-test
+
 - **Fichiers concernés** : `/tmp/talos-mcp-test/utils.py`, `test_utils.py` (sandbox)
 - **Provider** : `ollama/qwen2.5-coder:14b`
 - **Validation** : `/home/jerem/workspace/talos/.venv/bin/python3 -m pytest test_utils.py -q` ❌
 - **Résultat** : la fonction `slugify` laissait des tirets en début/fin de chaîne ; l'auto-fix n'a pas corrigé en un seul essai.
 
+### 4686ef12 — talos-mcp-counter
+
+- **Fichiers concernés** : `/tmp/talos-mcp-test/counter.py`, `test_counter.py` (sandbox)
+- **Provider** : `ollama/qwen2.5-coder:14b`
+- **Validation** : `/home/jerem/workspace/talos/.venv/bin/python3 -m pytest test_counter.py -q` ✅
+- **Résultat** : la classe `Counter` et ses tests ont été générés correctement, validation passée.
+
 ### Évaluation
 
-⚠️ Partiel — le MCP fonctionne (soumission + retour de statut), mais le modèle fait encore des erreurs de logique sur les cas de bord.
+✅/⚠️ Le MCP fonctionne (soumission, suivi, validation). Le modèle réussit les tâches simples et échoue sur certains cas de bord.
 
 ## Synthèse — Préparation aux gros travaux
 
@@ -147,6 +154,7 @@ Créer un petit fichier `hello.py` contenant une fonction `greet(name: str) -> s
 - `qwen2.5-coder:14b` rentre dans 12 Go de VRAM avec 32 768 tokens de contexte.
 - Format d'édition SEARCH/REPLACE activé (`edit-format: diff` dans `~/.aider.conf.yml`).
 - Sandbox actif par défaut, pas d'écriture directe sur le repo (`TALOS_AUTO_APPLY=false`).
+- Appels MCP fonctionnels : soumission, statut, logs.
 
 ### Ce qui reste à surveiller ⚠️
 
