@@ -6,6 +6,7 @@ from sqlmodel import Session
 
 from sentarr.alerts.engine import evaluate_alerts
 from sentarr.collectors.arr_sync import sync_acquisition
+from sentarr.collectors.bazarr_sync import sync_bazarr
 from sentarr.collectors.plex_api import sync_libraries
 from sentarr.collectors.plex_log_parser import parse_log_directory
 from sentarr.config import settings
@@ -53,6 +54,16 @@ async def evaluate_alerts_job() -> None:
         logger.exception("Alert evaluation failed")
 
 
+async def sync_bazarr_job() -> None:
+    logger.info("Starting Bazarr sync")
+    try:
+        with Session(engine) as session:
+            count = sync_bazarr(session)
+            logger.info("Synced %s subtitle tracks", count)
+    except Exception:
+        logger.exception("Bazarr sync failed")
+
+
 def start_scheduler() -> AsyncIOScheduler:
     init_db()
     scheduler = AsyncIOScheduler()
@@ -82,6 +93,13 @@ def start_scheduler() -> AsyncIOScheduler:
         "interval",
         seconds=settings.arr_poll_interval_seconds,
         id="alert_engine",
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        lambda: asyncio.create_task(sync_bazarr_job()),
+        "interval",
+        seconds=settings.poll_interval_seconds,
+        id="bazarr_sync",
         replace_existing=True,
     )
     scheduler.start()
