@@ -21,6 +21,13 @@ class Settings(BaseSettings):
         "/config/Library/Application Support/Plex Media Server/Logs/Plex Media Server.log"
     )
 
+    # *arr clients (V2)
+    radarr_urls: str = "[]"
+    sonarr_urls: str = "[]"
+    arr_poll_interval_seconds: int = 60
+    stall_threshold_minutes: int = 30
+    webhook_url: str | None = None
+
     # Application
     database_url: str = "sqlite:///app/data/sentarr.db"
     log_level: str = "INFO"

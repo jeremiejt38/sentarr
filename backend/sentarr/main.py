@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from sentarr.api import logs, movies, search, shows, summary
+from sentarr.api import acquisition, logs, movies, search, shows, summary
 from sentarr.api import websocket as ws_module
 from sentarr.config import settings
 from sentarr.db import init_db
@@ -38,6 +38,7 @@ app.include_router(shows.router, prefix="/api/shows", tags=["shows"])
 app.include_router(summary.router, prefix="/api/summary", tags=["summary"])
 app.include_router(search.router, prefix="/api/search", tags=["search"])
 app.include_router(logs.router, prefix="/api/logs", tags=["logs"])
+app.include_router(acquisition.router, prefix="/api/acquisition", tags=["acquisition"])
 app.include_router(ws_module.router, prefix="/ws", tags=["websocket"])
 
 
