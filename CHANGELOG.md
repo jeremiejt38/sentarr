@@ -7,6 +7,19 @@ et ce projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-15
+
+### Added
+
+- Connecteurs *arr read-only (Radarr/Sonarr) via `ArrClient`.
+- Tables `arr_instances`, `acquisition_items`, `acquisition_events`, `alerts`.
+- Synchronisation périodique queue/history des instances *arr.
+- Corrélation acquisition ↔ Plex par chemin normalisé.
+- Moteur d'alertes : items bloqués (stall) et échecs (failed).
+- Endpoint `/api/health` de score de santé global.
+- Page Acquisition avec filtres status/source/recherche.
+- Page Alertes avec liste, filtre sévérité/résolues et résolution.
+
 ## [0.1.0] - 2026-08-15
 
 ### Added
