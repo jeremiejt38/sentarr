@@ -15,6 +15,20 @@
   font-weight: 700;
   margin-bottom: 24px;
   color: var(--arr-blue);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ws-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--arr-red);
+}
+
+.ws-indicator--on {
+  background: var(--arr-green);
 }
 
 .sidebar__nav {
@@ -100,4 +114,37 @@
 
 .error {
   color: var(--arr-red);
+}
+
+.detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: var(--arr-surface);
+  border: 1px solid var(--arr-border);
+  border-radius: var(--radius-sm);
+}
+
+.detail-path {
+  color: var(--arr-muted);
+  font-size: 12px;
+  margin-bottom: 24px;
+  word-break: break-all;
+}
+
+.filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.filters input,
+.filters select {
+  background: var(--arr-surface);
+  border: 1px solid var(--arr-border);
+  border-radius: var(--radius-sm);
+  color: var(--arr-text);
+  padding: 8px 12px;
 }

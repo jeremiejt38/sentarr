@@ -69,7 +69,6 @@ async def summary(session: Session = Depends(get_session)) -> SummaryResponse:
         total_shows=len(shows),
         movies_in_progress=sum(1 for m in movies if m.overall_status.value == "in_progress"),
         shows_in_progress=sum(1 for s in shows if s.overall_status.value == "in_progress"),
-        errors=sum(
-            1 for m in movies if m.overall_status.value == "error"
-        ) + sum(1 for s in shows if s.overall_status.value == "error"),
+        errors=sum(1 for m in movies if m.overall_status.value == "error")
+        + sum(1 for s in shows if s.overall_status.value == "error"),
     )
