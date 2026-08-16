@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import Any
 
@@ -44,5 +45,35 @@ class ProwlarrClient:
             return data
         return []
 
+    def get_indexer_stats(self) -> dict[str, Any]:
+        """Fetch indexer statistics (queries, grabs, etc.)."""
+        try:
+            response = self._client.get("/api/v1/indexerstats")
+            response.raise_for_status()
+            data: dict[str, Any] = response.json()
+            return data
+        except Exception:
+            logger.exception("Failed to fetch Prowlarr indexer stats")
+            return {}
+
     def close(self) -> None:
         self._client.close()
+
+
+def get_prowlarr_instances() -> list[dict[str, str]]:
+    """Get Prowlarr instances: multi-instance JSON or single-instance fallback."""
+    try:
+        instances = json.loads(settings.prowlarr_instances)
+    except (json.JSONDecodeError, AttributeError):
+        instances = []
+    if not isinstance(instances, list):
+        instances = []
+    if not instances and settings.prowlarr_url:
+        instances = [
+            {
+                "name": "default",
+                "url": settings.prowlarr_url,
+                "api_key": settings.prowlarr_api_key or "",
+            }
+        ]
+    return instances

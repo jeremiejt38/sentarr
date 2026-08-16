@@ -259,11 +259,28 @@ def _already_seen(session: Session, line_hash: str) -> bool:
 
 
 def parse_log_directory(session: Session, log_dir: Path | None = None) -> int:
+    """Parse Plex logs from all configured servers (or a single directory)."""
     if log_dir:
-        base_dir = Path(log_dir)
-    else:
-        configured = Path(settings.plex_log_path)
-        base_dir = configured.parent if configured.is_file() else configured
+        return _parse_single_dir(session, Path(log_dir))
+
+    # Multi-server: parse logs from each server's log_path
+    server_defs = settings.parsed_plex_servers
+    if server_defs:
+        total = 0
+        for srv in server_defs:
+            lp = srv.get("log_path")
+            if not lp:
+                continue
+            total += _parse_single_dir(session, Path(lp))
+        return total
+
+    # Legacy single server
+    configured = Path(settings.plex_log_path)
+    return _parse_single_dir(session, configured)
+
+
+def _parse_single_dir(session: Session, path: Path) -> int:
+    base_dir = path.parent if path.is_file() else path
     if not base_dir.exists():
         logger.warning("Log directory not found: %s", base_dir)
         return 0

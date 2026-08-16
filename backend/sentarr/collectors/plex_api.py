@@ -15,6 +15,7 @@ from sentarr.models.plex import (
     Movie,
     MovieTask,
     MovieTaskType,
+    PlexServerConfig,
     Season,
     SeasonTask,
     SeasonTaskType,
@@ -27,15 +28,51 @@ from sentarr.models.plex import (
 logger = logging.getLogger(__name__)
 
 
-def get_plex_server() -> PlexServer | None:
-    if not settings.plex_token:
+def get_plex_server(url: str | None = None, token: str | None = None) -> PlexServer | None:
+    """Connect to a Plex server. Falls back to settings when url/token not provided."""
+    _url = url or settings.plex_url
+    _token = token or settings.plex_token
+    if not _token:
         logger.warning("PLEX_TOKEN is not set; cannot connect to Plex")
         return None
     try:
-        return PlexServer(settings.plex_url, settings.plex_token)  # type: ignore[no-untyped-call]
+        return PlexServer(_url, _token)  # type: ignore[no-untyped-call]
     except Exception:
-        logger.exception("Failed to connect to Plex at %s", settings.plex_url)
+        logger.exception("Failed to connect to Plex at %s", _url)
         return None
+
+
+def _ensure_server_configs(session: Session) -> list[PlexServerConfig]:
+    """Sync PLEX_SERVERS env config into the database and return active configs."""
+    server_defs = settings.parsed_plex_servers
+    if not server_defs:
+        return []
+
+    configs: list[PlexServerConfig] = []
+    for srv in server_defs:
+        name = srv.get("name", "default")
+        existing = session.exec(  # type: ignore[attr-defined]
+            select(PlexServerConfig).where(PlexServerConfig.name == name)
+        ).first()
+        if existing:
+            existing.base_url = srv.get("url", existing.base_url)
+            existing.token = srv.get("token", existing.token)
+            existing.log_path = srv.get("log_path", existing.log_path)
+            existing.is_active = srv.get("is_active", True)
+            session.add(existing)
+            configs.append(existing)
+        else:
+            cfg = PlexServerConfig(
+                name=name,
+                base_url=srv.get("url", ""),
+                token=srv.get("token", ""),
+                log_path=srv.get("log_path"),
+                is_active=srv.get("is_active", True),
+            )
+            session.add(cfg)
+            session.flush()
+            configs.append(cfg)
+    return [c for c in configs if c.is_active]
 
 
 def _task_status_from_video(video: Any) -> TaskStatus:
@@ -82,10 +119,27 @@ def _ensure_episode_tasks(session: Session, episode: Episode) -> None:
 
 
 def sync_libraries(session: Session) -> None:
-    server = get_plex_server()
-    if not server:
+    """Sync libraries from all configured Plex servers."""
+    server_configs = _ensure_server_configs(session)
+    if not server_configs:
+        # Legacy single-server fallback
+        plex = get_plex_server()
+        if plex:
+            _sync_server_libraries(session, plex, plex_server_id=None)
         return
 
+    for cfg in server_configs:
+        plex = get_plex_server(url=cfg.base_url, token=cfg.token)
+        if not plex:
+            logger.warning("Skipping inactive/unreachable Plex server: %s", cfg.name)
+            continue
+        _sync_server_libraries(session, plex, plex_server_id=cfg.id)
+
+
+def _sync_server_libraries(
+    session: Session, server: PlexServer, plex_server_id: int | None
+) -> None:
+    """Sync libraries from a single Plex server connection."""
     sections: list[Any] = server.library.sections()
     for section in sections:
         section_type: str = section.type
@@ -95,7 +149,10 @@ def sync_libraries(session: Session) -> None:
             continue
 
         existing = session.exec(  # type: ignore[attr-defined]
-            select(Library).where(Library.plex_library_key == str(section.key))
+            select(Library).where(
+                Library.plex_library_key == str(section.key),
+                Library.plex_server_id == plex_server_id,
+            )
         ).first()
         if existing:
             existing.name = section.title
@@ -104,6 +161,7 @@ def sync_libraries(session: Session) -> None:
             session.add(existing)
         else:
             library = Library(
+                plex_server_id=plex_server_id,
                 plex_library_key=str(section.key),
                 name=section.title,
                 type=LibraryType(section_type),

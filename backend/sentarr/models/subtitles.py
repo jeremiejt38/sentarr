@@ -19,6 +19,7 @@ class SubtitleTrack(SQLModel, table=True):
     forced: bool = Field(default=False)
     path: str | None = None
     provider: str | None = None
+    source_name: str = Field(default="default")
     downloaded_at: datetime | None = None
     created_at: datetime = Field(default_factory=now_utc)
     updated_at: datetime = Field(default_factory=now_utc)

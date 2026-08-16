@@ -7,6 +7,30 @@ et ce projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-16
+
+### Added
+
+- Multi-serveur Plex : modèle `PlexServerConfig`, config JSON `PLEX_SERVERS`, sync par serveur.
+- API CRUD serveurs Plex : `GET/POST/PATCH/DELETE /api/servers`.
+- Authentification par clé API : modèle `ApiKey`, modes `none`/`api_key`/`forms`/`external`.
+- API gestion clés API : `GET/POST/DELETE /api/auth/keys`.
+- Bootstrap clé admin depuis `SENTARR_ADMIN_API_KEY` au démarrage.
+- Multi-instance Bazarr : config JSON `BAZARR_INSTANCES`, sync multi-source.
+- Multi-instance Prowlarr : config JSON `PROWLARR_INSTANCES`, indexeurs multi-source.
+- Endpoint `/api/indexers/stats` pour les statistiques d'indexeurs.
+- Page Paramètres dans le frontend (serveurs Plex, clés API).
+- Migration Alembic pour `plex_servers`, `api_keys`, champ `source_name` sur `subtitle_tracks`.
+- 18 nouveaux tests (total : 65 tests).
+
+### Changed
+
+- `sync_libraries` itère sur tous les serveurs Plex actifs.
+- `parse_log_directory` analyse les logs de chaque serveur.
+- `sync_bazarr` et l'API indexeurs supportent le multi-instance.
+- Auth middleware accepte `Bearer`, `X-Api-Key` et `?apikey=` query param.
+- API client frontend étendu avec `patch` et `delete`.
+
 ## [0.3.0] - 2026-08-15
 
 ### Added

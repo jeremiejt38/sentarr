@@ -12,6 +12,7 @@ from sentarr.models.arr import (
     RootFolder,
     parse_arr_urls,
 )
+from sentarr.models.auth import ApiKey, ApiKeyRole
 from sentarr.models.base import BaseModel
 from sentarr.models.plex import (
     Episode,
@@ -23,6 +24,7 @@ from sentarr.models.plex import (
     Movie,
     MovieTask,
     MovieTaskType,
+    PlexServerConfig,
     Season,
     SeasonTask,
     SeasonTaskType,
@@ -38,12 +40,15 @@ __all__ = [
     "AcquisitionItem",
     "Alert",
     "AnalyticsSnapshot",
+    "ApiKey",
+    "ApiKeyRole",
     "ArrClientType",
     "ArrEpisode",
     "ArrInstance",
     "ArrMovie",
     "ArrSeries",
     "BaseModel",
+    "PlexServerConfig",
     "QualityProfile",
     "RootFolder",
     "Episode",

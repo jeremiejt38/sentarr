@@ -8,6 +8,7 @@ import { ShowDetail } from './pages/ShowDetail';
 import { AcquisitionPage } from './pages/AcquisitionPage';
 import { AlertsPage } from './pages/AlertsPage';
 import { DownloadPage } from './pages/DownloadPage';
+import { SettingsPage } from './pages/SettingsPage';
 import './styles/theme.css';
 import './app.css';
 
@@ -24,6 +25,7 @@ function App() {
           <Route path="acquisition" element={<AcquisitionPage />} />
           <Route path="download" element={<DownloadPage />} />
           <Route path="alerts" element={<AlertsPage />} />
+          <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

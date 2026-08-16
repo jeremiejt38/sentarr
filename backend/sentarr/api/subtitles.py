@@ -24,6 +24,7 @@ async def list_subtitles(
                 "forced": track.forced,
                 "path": track.path,
                 "provider": track.provider,
+                "source": track.source_name,
                 "downloaded_at": track.downloaded_at,
             }
             for track in rows

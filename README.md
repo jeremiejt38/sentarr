@@ -6,7 +6,7 @@ Dashboard self-hosted de suivi de l'avancement des tâches de traitement de cont
 
 - **V1** : monitoring du pipeline Plex (films & séries), dashboard web en temps réel.
 - **V2** : connexion Radarr/Sonarr, timeline unifiée acquisition → Plex, score de santé, alertes.
-- **V3** : Bazarr, Prowlarr, analytics, multi-serveur, auth, notifications avancées, API publique.
+- **V3** : Bazarr, Prowlarr, analytics, multi-serveur Plex, auth par clé API, notifications avancées, multi-instance Bazarr/Prowlarr, page Paramètres.
 
 ## Objectif
 
