@@ -25,6 +25,8 @@ export function Layout() {
           <Link to="/acquisition">Acquisition</Link>
           <Link to="/download">Téléchargements</Link>
           <Link to="/alerts">Alertes</Link>
+          <Link to="/indexers">Indexeurs</Link>
+          <Link to="/subtitles">Sous-titres</Link>
           <Link to="/settings">Paramètres</Link>
         </nav>
       </aside>
