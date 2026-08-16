@@ -288,7 +288,8 @@ Test de l'intégration du coût monétaire et du `tokens received` dans `talos/c
 | Job | État | Action |
 |---|---|---|
 | `a9648c6e` / `3bdb84c2` `health-score-tests` | ❌ Échec (génération OK, mais `TaskStatus` passé en tant que tâche) | Implémentation manuelle du test + correction de `calculate_health_season/show` pour agréger les sous-niveaux. 7 tests passent. |
-| Autres jobs | 🚫 Annulés | Re-soumission avec `validate_cmd` corrigée reportée ; priorité au test manuel validé. |
+| `04d0aa55` `qbittorrent-test` | ❌ Échec (test instancie `QBittorrentClient` qui appelle `_login` réseau) | Implémentation manuelle de `test_qbittorrent.py` : paramétrisation de `_map_status` + test d'init avec `_login` mocké. 21 tests passent. |
+| Autres jobs | 🚫 Annulés | Re-soumission avec `validate_cmd` corrigée reportée ; priorité aux tests manuels validés. |
 
 ### Apprentissages
 
