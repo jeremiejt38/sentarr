@@ -6,6 +6,11 @@ from sqlalchemy.orm import Session
 from sqlmodel import select
 
 from sentarr.db import get_session
+from sentarr.health.score import (
+    calculate_health_episode,
+    calculate_health_season,
+    calculate_health_show,
+)
 from sentarr.models.plex import Episode, Season, Show, ShowTask, TaskStatus
 from sentarr.schemas.common import ShowSummary
 
@@ -13,12 +18,21 @@ router = APIRouter()
 
 
 def _episode_detail(episode: Episode) -> dict[str, Any]:
+    health = calculate_health_episode(episode)
     return {
         "id": episode.id,
         "episode_number": episode.episode_number,
         "title": episode.title,
         "overall_status": episode.overall_status.value,
         "progress_percent": episode.progress_percent,
+        "health_score": health.score,
+        "health": {
+            "total": health.total,
+            "completed": health.completed,
+            "in_progress": health.in_progress,
+            "error": health.error,
+            "pending": health.pending,
+        },
         "tasks": [
             {
                 "type": task.task_type.value,
@@ -33,11 +47,20 @@ def _episode_detail(episode: Episode) -> dict[str, Any]:
 
 
 def _season_detail(season: Season) -> dict[str, Any]:
+    health = calculate_health_season(season)
     return {
         "id": season.id,
         "season_number": season.season_number,
         "overall_status": season.overall_status.value,
         "progress_percent": season.progress_percent,
+        "health_score": health.score,
+        "health": {
+            "total": health.total,
+            "completed": health.completed,
+            "in_progress": health.in_progress,
+            "error": health.error,
+            "pending": health.pending,
+        },
         "tasks": [
             {
                 "type": task.task_type.value,
@@ -81,12 +104,21 @@ async def get_show(show_id: int, session: Session = Depends(get_session)) -> dic
     show = session.get(Show, show_id)
     if not show:
         raise HTTPException(status_code=404, detail="Show not found")
+    health = calculate_health_show(show)
     return {
         "id": show.id,
         "title": show.title,
         "year": show.year,
         "overall_status": show.overall_status.value,
         "progress_percent": show.progress_percent,
+        "health_score": health.score,
+        "health": {
+            "total": health.total,
+            "completed": health.completed,
+            "in_progress": health.in_progress,
+            "error": health.error,
+            "pending": health.pending,
+        },
         "tasks": [
             {
                 "type": task.task_type.value,

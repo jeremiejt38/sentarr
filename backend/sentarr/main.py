@@ -10,6 +10,8 @@ from fastapi.staticfiles import StaticFiles
 from sentarr.api import (
     acquisition,
     alerts,
+    analytics,
+    download,
     health,
     indexers,
     logs,
@@ -24,7 +26,7 @@ from sentarr.api import (
 from sentarr.api import websocket as ws_module
 from sentarr.auth import AuthMiddleware
 from sentarr.config import settings
-from sentarr.db import init_db
+from sentarr.db import run_migrations
 from sentarr.tasks.scheduler import start_scheduler
 
 logging.basicConfig(
@@ -62,6 +64,8 @@ app.include_router(metrics.router, prefix="/metrics", tags=["metrics"])
 app.include_router(notifications.router, prefix="/api/notifications", tags=["notifications"])
 app.include_router(subtitles.router, prefix="/api/subtitles", tags=["subtitles"])
 app.include_router(indexers.router, prefix="/api/indexers", tags=["indexers"])
+app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"])
+app.include_router(download.router, prefix="/api/download", tags=["download"])
 app.include_router(ws_module.router, prefix="/ws", tags=["websocket"])
 
 
@@ -82,9 +86,9 @@ else:
 
 @app.on_event("startup")
 async def startup() -> None:
-    logger.info("Initializing database...")
-    init_db()
-    logger.info("Database initialized.")
+    logger.info("Running database migrations...")
+    run_migrations()
+    logger.info("Database migrations completed.")
     start_scheduler()
 
 

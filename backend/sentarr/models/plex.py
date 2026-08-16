@@ -267,4 +267,5 @@ class LogEventRaw(SQLModel, table=True):
     parsed_event_type: str | None = Field(default=None, nullable=True)
     correlated_to_type: str | None = Field(default=None, nullable=True)
     correlated_to_id: int | None = Field(default=None, nullable=True)
+    correlation_note: str | None = Field(default=None, nullable=True)
     created_at: datetime = Field(default_factory=now_utc)

@@ -1,11 +1,11 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import text
 from sqlmodel import Session, select
 
 from sentarr.db import get_session
-from sentarr.models.arr import AcquisitionItem, ArrInstance
+from sentarr.models.arr import AcquisitionEvent, AcquisitionItem, ArrInstance
 
 router = APIRouter()
 
@@ -53,4 +53,28 @@ async def list_sources(session: Session = Depends(get_session)) -> list[dict[str
             "profile_label": instance.profile_label,
         }
         for instance in instances
+    ]
+
+
+@router.get("/{item_id}/timeline")
+async def item_timeline(
+    item_id: int, session: Session = Depends(get_session)
+) -> list[dict[str, Any]]:
+    item = session.get(AcquisitionItem, item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Acquisition item not found")
+    events = session.exec(
+        select(AcquisitionEvent)
+        .where(AcquisitionEvent.item_id == item_id)
+        .order_by(AcquisitionEvent.occurred_at, AcquisitionEvent.id)  # type: ignore[arg-type]
+    ).all()
+    return [
+        {
+            "id": event.id,
+            "event_type": event.event_type,
+            "message": event.message,
+            "occurred_at": event.occurred_at,
+            "created_at": event.created_at,
+        }
+        for event in events
     ]

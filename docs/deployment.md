@@ -103,8 +103,13 @@ CMD ["uvicorn", "sentarr.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 ### Méthode 2 — Template Community Applications (V3+)
 
-- Préparer un template XML pour Unraid CA.
-- Variables : `PLEX_TOKEN`, `PLEX_LOG_PATH`, `POLL_INTERVAL_SECONDS`, etc.
+A ready-to-use Unraid CA template is provided as `unraid-template.xml`. Import it from the CA interface or use the URL:
+
+```
+https://raw.githubusercontent.com/jeremiejt38/sentarr/main/unraid-template.xml
+```
+
+Variables : `PLEX_TOKEN`, `PLEX_LOG_PATH`, `POLL_INTERVAL_SECONDS`, `RADARR_URLS`, `SONARR_URLS`, `DOWNLOAD_CLIENTS`, etc.
 
 ## Intégration Traefik
 

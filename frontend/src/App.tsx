@@ -7,6 +7,7 @@ import { ShowsPage } from './pages/ShowsPage';
 import { ShowDetail } from './pages/ShowDetail';
 import { AcquisitionPage } from './pages/AcquisitionPage';
 import { AlertsPage } from './pages/AlertsPage';
+import { DownloadPage } from './pages/DownloadPage';
 import './styles/theme.css';
 import './app.css';
 
@@ -21,6 +22,7 @@ function App() {
           <Route path="shows" element={<ShowsPage />} />
           <Route path="shows/:id" element={<ShowDetail />} />
           <Route path="acquisition" element={<AcquisitionPage />} />
+          <Route path="download" element={<DownloadPage />} />
           <Route path="alerts" element={<AlertsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

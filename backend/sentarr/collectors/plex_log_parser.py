@@ -92,27 +92,46 @@ def _match_event(message: str) -> tuple[str | None, dict[str, Any]]:
     return None, {}
 
 
-def _resolve_correlation(session: Session, data: dict[str, Any]) -> tuple[str | None, int | None]:
+def _resolve_correlation(
+    session: Session, data: dict[str, Any]
+) -> tuple[str | None, int | None, str | None]:
     path = data.get("path")
     item_id = data.get("item_id")
+    note: str | None = None
 
     if path:
-        movie = session.exec(select(Movie).where(Movie.path == path)).first()
-        if movie:
-            return "movie", movie.id
-        episode = session.exec(select(Episode).where(Episode.path == path)).first()
-        if episode:
-            return "episode", episode.id
+        movies = list(session.exec(select(Movie).where(Movie.path == path)).all())
+        episodes = list(session.exec(select(Episode).where(Episode.path == path)).all())
+        if len(movies) > 1 or len(episodes) > 1 or (movies and episodes):
+            note = "duplicate_path"
+            return None, None, note
+        if movies:
+            return "movie", movies[0].id, note
+        if episodes:
+            return "episode", episodes[0].id, note
+
+        # Path not found: try to detect misclassified item by rating key.
+        if item_id:
+            movie = session.exec(select(Movie).where(Movie.plex_rating_key == item_id)).first()
+            if movie:
+                note = "misclassified"
+                return "movie", movie.id, note
+            episode = session.exec(
+                select(Episode).where(Episode.plex_rating_key == item_id)
+            ).first()
+            if episode:
+                note = "misclassified"
+                return "episode", episode.id, note
 
     if item_id:
         movie = session.exec(select(Movie).where(Movie.plex_rating_key == item_id)).first()
         if movie:
-            return "movie", movie.id
+            return "movie", movie.id, note
         episode = session.exec(select(Episode).where(Episode.plex_rating_key == item_id)).first()
         if episode:
-            return "episode", episode.id
+            return "episode", episode.id, note
 
-    return None, None
+    return None, None, note
 
 
 def _movie_task_type(event_type: str) -> MovieTaskType | None:
@@ -147,7 +166,34 @@ def _episode_task_type(event_type: str) -> EpisodeTaskType | None:
     return mapping.get(event_type)
 
 
+PLEX_PASS_FEATURES = {
+    MovieTaskType.BIF,
+    MovieTaskType.INTRO_MARKERS,
+    MovieTaskType.CHAPTER_MARKERS,
+    EpisodeTaskType.BIF,
+    EpisodeTaskType.INTRO_MARKERS,
+    EpisodeTaskType.CHAPTER_MARKERS,
+}
+
+
+def _plex_pass_enabled() -> bool:
+    # true or auto: treat as enabled unless explicitly disabled
+    return settings.plex_pass_enabled != "false"
+
+
+def _is_task_applicable(task: MovieTask | EpisodeTask) -> bool:
+    task_type = task.task_type
+    if task_type not in PLEX_PASS_FEATURES:
+        return True
+    return _plex_pass_enabled()
+
+
 def _update_task(task: MovieTask | EpisodeTask, event_type: str, timestamp: datetime) -> None:
+    if not _is_task_applicable(task):
+        task.status = TaskStatus.NOT_APPLICABLE
+        task.updated_at = timestamp
+        return
+
     if task.status in (TaskStatus.PENDING, TaskStatus.NOT_APPLICABLE):
         task.status = TaskStatus.IN_PROGRESS
         task.started_at = timestamp
@@ -257,8 +303,13 @@ def _parse_file(session: Session, log_file: Path) -> int:
 
             correlated_type: str | None = None
             correlated_id: int | None = None
+            correlation_note: str | None = None
             if event_type and timestamp:
-                correlated_type, correlated_id = _resolve_correlation(session, data)
+                (
+                    correlated_type,
+                    correlated_id,
+                    correlation_note,
+                ) = _resolve_correlation(session, data)
                 if correlated_type and correlated_id:
                     _update_task_status(
                         session,
@@ -277,6 +328,7 @@ def _parse_file(session: Session, log_file: Path) -> int:
                     parsed_event_type=event_type,
                     correlated_to_type=correlated_type,
                     correlated_to_id=correlated_id,
+                    correlation_note=correlation_note,
                 )
             )
             inserted += 1
