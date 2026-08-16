@@ -6,6 +6,7 @@ from sqlmodel import Session
 
 from sentarr.alerts.engine import evaluate_alerts
 from sentarr.analytics.snapshot import purge_old_log_events, take_snapshot
+from sentarr.api.websocket import broadcast
 from sentarr.collectors.arr_sync import sync_acquisition
 from sentarr.collectors.bazarr_sync import sync_bazarr
 from sentarr.collectors.plex_api import sync_libraries
@@ -21,6 +22,7 @@ async def sync_plex_job() -> None:
     try:
         with Session(engine) as session:
             sync_libraries(session)
+        await broadcast({"type": "sync_complete", "source": "plex"})
     except Exception:
         logger.exception("Plex sync failed")
 
@@ -31,6 +33,8 @@ async def parse_plex_logs_job() -> None:
         with Session(engine) as session:
             count = parse_log_directory(session)
             logger.info("Parsed %s log lines", count)
+        if count:
+            await broadcast({"type": "sync_complete", "source": "plex_logs", "count": count})
     except Exception:
         logger.exception("Plex log parsing failed")
 
@@ -41,6 +45,7 @@ async def sync_arr_job() -> None:
         with Session(engine) as session:
             sync_acquisition(session)
             logger.info("*arr sync completed")
+        await broadcast({"type": "sync_complete", "source": "arr"})
     except Exception:
         logger.exception("*arr sync failed")
 
@@ -51,6 +56,8 @@ async def evaluate_alerts_job() -> None:
         with Session(engine) as session:
             count = len(evaluate_alerts(session))
             logger.info("Created %s alerts", count)
+        if count:
+            await broadcast({"type": "alerts_created", "count": count})
     except Exception:
         logger.exception("Alert evaluation failed")
 
