@@ -14,6 +14,23 @@ if TYPE_CHECKING:
     pass
 
 
+class PlexServerConfig(SQLModel, table=True):
+    """Represents a Plex server instance tracked by Sentarr."""
+
+    __tablename__ = "plex_servers"
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(index=True, sa_column_kwargs={"unique": True})
+    base_url: str
+    token: str
+    log_path: str | None = Field(default=None, nullable=True)
+    is_active: bool = Field(default=True)
+    created_at: datetime = Field(default_factory=now_utc)
+    updated_at: datetime = Field(default_factory=now_utc)
+
+    libraries: list["Library"] = Relationship(back_populates="server")
+
+
 class LibraryType(enum.StrEnum):
     MOVIE = "movie"
     SHOW = "show"
@@ -74,7 +91,9 @@ class Library(SQLModel, table=True):
     )
 
     id: int | None = Field(default=None, primary_key=True)
-    plex_server_id: int | None = Field(default=None, nullable=True)
+    plex_server_id: int | None = Field(
+        default=None, nullable=True, foreign_key="plex_servers.id"
+    )
     plex_library_key: str
     name: str
     type: LibraryType
@@ -82,6 +101,7 @@ class Library(SQLModel, table=True):
     created_at: datetime = Field(default_factory=now_utc)
     updated_at: datetime = Field(default_factory=now_utc)
 
+    server: PlexServerConfig | None = Relationship(back_populates="libraries")
     movies: list["Movie"] = Relationship(back_populates="library")
     shows: list["Show"] = Relationship(back_populates="library")
 

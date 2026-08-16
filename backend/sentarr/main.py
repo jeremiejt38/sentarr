@@ -11,6 +11,7 @@ from sentarr.api import (
     acquisition,
     alerts,
     analytics,
+    auth,
     download,
     health,
     indexers,
@@ -19,6 +20,7 @@ from sentarr.api import (
     movies,
     notifications,
     search,
+    servers,
     shows,
     subtitles,
     summary,
@@ -26,7 +28,7 @@ from sentarr.api import (
 from sentarr.api import websocket as ws_module
 from sentarr.auth import AuthMiddleware
 from sentarr.config import settings
-from sentarr.db import run_migrations
+from sentarr.db import engine, run_migrations
 from sentarr.tasks.scheduler import start_scheduler
 
 logging.basicConfig(
@@ -66,6 +68,8 @@ app.include_router(subtitles.router, prefix="/api/subtitles", tags=["subtitles"]
 app.include_router(indexers.router, prefix="/api/indexers", tags=["indexers"])
 app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"])
 app.include_router(download.router, prefix="/api/download", tags=["download"])
+app.include_router(servers.router, prefix="/api/servers", tags=["servers"])
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(ws_module.router, prefix="/ws", tags=["websocket"])
 
 
@@ -84,11 +88,39 @@ else:
         return {"status": "ok", "version": "0.3.0", "message": "Frontend static dir not found"}
 
 
+def _bootstrap_admin_api_key() -> None:
+    """Create the initial admin API key from env if not already present."""
+    from sqlmodel import Session, select
+
+    from sentarr.models.auth import ApiKey, ApiKeyRole
+
+    raw_key = settings.sentarr_admin_api_key
+    if not raw_key:
+        return
+    key_hash = ApiKey.hash_key(raw_key)
+    with Session(engine) as session:
+        existing = session.exec(
+            select(ApiKey).where(ApiKey.key_hash == key_hash)
+        ).first()
+        if not existing:
+            session.add(
+                ApiKey(
+                    name="admin-bootstrap",
+                    key_hash=key_hash,
+                    key_prefix=raw_key[:11] + "..." if len(raw_key) > 11 else raw_key,
+                    role=ApiKeyRole.ADMIN,
+                )
+            )
+            session.commit()
+            logger.info("Bootstrap admin API key created")
+
+
 @app.on_event("startup")
 async def startup() -> None:
     logger.info("Running database migrations...")
     run_migrations()
     logger.info("Database migrations completed.")
+    _bootstrap_admin_api_key()
     start_scheduler()
 
 

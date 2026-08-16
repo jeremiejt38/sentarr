@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import Any
 
@@ -14,12 +15,16 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # Plex
+    # Plex (single-server legacy, still used as fallback)
     plex_url: str = "http://plex:32400"
     plex_token: str = Field(default="", description="Plex X-Plex-Token")
     plex_log_path: str = (
         "/config/Library/Application Support/Plex Media Server/Logs/Plex Media Server.log"
     )
+
+    # Plex multi-server (JSON array)
+    # Format: [{"name":"main","url":"http://plex:32400","token":"...","log_path":"..."}]
+    plex_servers: str = "[]"
 
     # *arr clients (V2)
     radarr_urls: str = "[]"
@@ -36,13 +41,20 @@ class Settings(BaseSettings):
     health_threshold_critical: int = 50
 
     # Auth (V3)
-    auth_mode: str = "none"  # none | forms | external
+    auth_mode: str = "none"  # none | api_key | forms | external
+    sentarr_admin_api_key: str = ""  # bootstrap admin key from env
 
-    # Extensions (V3)
+    # Extensions (V3) — single-instance legacy
     bazarr_url: str | None = None
     bazarr_api_key: str | None = None
     prowlarr_url: str | None = None
     prowlarr_api_key: str | None = None
+
+    # Extensions (V3) — multi-instance JSON
+    # Format: [{"name":"bazarr-main","url":"http://bazarr:6767","api_key":"..."}]
+    bazarr_instances: str = "[]"
+    # Format: [{"name":"prowlarr-main","url":"http://prowlarr:9696","api_key":"..."}]
+    prowlarr_instances: str = "[]"
 
     # Notifications (V3)
     notification_channels: str = "[]"
@@ -81,6 +93,26 @@ class Settings(BaseSettings):
         path = Path(self.database_url.replace("sqlite:///", "").replace("sqlite://", "")).parent
         path.mkdir(parents=True, exist_ok=True)
         return path
+
+    @property
+    def parsed_plex_servers(self) -> list[dict[str, Any]]:
+        """Return list of Plex server configs from JSON env, with single-server fallback."""
+        try:
+            servers = json.loads(self.plex_servers)
+        except json.JSONDecodeError:
+            servers = []
+        if not isinstance(servers, list):
+            servers = []
+        if not servers and self.plex_token:
+            servers = [
+                {
+                    "name": "default",
+                    "url": self.plex_url,
+                    "token": self.plex_token,
+                    "log_path": self.plex_log_path,
+                }
+            ]
+        return servers
 
 
 settings = Settings()
