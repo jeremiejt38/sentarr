@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 security = HTTPBasic(auto_error=False)
 
 PUBLIC_PATHS = frozenset(
-    {"/health", "/metrics", "/docs", "/openapi.json", "/api/auth/login"}
+    {"/health", "/metrics", "/docs", "/openapi.json", "/api/v1/auth/login"}
 )
 
 

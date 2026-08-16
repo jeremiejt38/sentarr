@@ -32,7 +32,7 @@ export function MovieDetail() {
   useEffect(() => {
     if (!id) return;
     api
-      .get<MovieDetailData>(`/api/movies/${id}`)
+      .get<MovieDetailData>(`/api/v1/movies/${id}`)
       .then(setMovie)
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
   }, [id]);

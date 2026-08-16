@@ -30,8 +30,12 @@ class Settings(BaseSettings):
     radarr_urls: str = "[]"
     sonarr_urls: str = "[]"
     arr_poll_interval_seconds: int = 60
-    stall_threshold_minutes: int = 30
-    webhook_url: str | None = None
+
+    # Alert thresholds per step (minutes, 0 = disabled)
+    alert_threshold_searched: int = 60
+    alert_threshold_downloading: int = 30
+    alert_threshold_importing: int = 15
+    alert_threshold_plex_overall: int = 60
 
     # Download clients (V2)
     download_clients: str = "[]"

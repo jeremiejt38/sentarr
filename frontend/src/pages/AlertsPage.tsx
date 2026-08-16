@@ -24,7 +24,7 @@ export function AlertsPage() {
     params.set('resolved', String(resolved));
     if (severity) params.set('severity', severity);
     api
-      .get<{ items: Alert[] }>(`/api/alerts?${params.toString()}`)
+      .get<{ items: Alert[] }>(`/api/v1/alerts?${params.toString()}`)
       .then((data) => setAlerts(data.items))
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
   };
@@ -35,7 +35,7 @@ export function AlertsPage() {
   }, [resolved, severity]);
 
   const resolve = async (id: number) => {
-    await api.post(`/api/alerts/${id}/resolve`, {});
+    await api.post(`/api/v1/alerts/${id}/resolve`, {});
     load();
   };
 

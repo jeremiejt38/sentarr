@@ -30,11 +30,11 @@ export function IndexersPage() {
 
   useEffect(() => {
     api
-      .get<{ items: Indexer[] }>('/api/indexers')
+      .get<{ items: Indexer[] }>('/api/v1/indexers')
       .then((d) => setIndexers(d.items))
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
     api
-      .get<{ sources: IndexerStats[] }>('/api/indexers/stats')
+      .get<{ sources: IndexerStats[] }>('/api/v1/indexers/stats')
       .then((d) => setStats(d.sources))
       .catch(() => {});
   }, []);

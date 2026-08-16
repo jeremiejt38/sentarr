@@ -22,7 +22,7 @@ export function DownloadPage() {
 
   useEffect(() => {
     api
-      .get<Torrent[]>('/api/download')
+      .get<Torrent[]>('/api/v1/download')
       .then(setTorrents)
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
   }, []);

@@ -23,7 +23,7 @@ export function ShowsPage() {
     if (query) params.set('q', query);
     if (statusFilter) params.set('status', statusFilter);
     api
-      .get<Show[]>(`/api/shows?${params.toString()}`)
+      .get<Show[]>(`/api/v1/shows?${params.toString()}`)
       .then(setShows)
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
   }, [query, statusFilter]);

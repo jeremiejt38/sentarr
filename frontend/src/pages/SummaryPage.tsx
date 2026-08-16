@@ -15,7 +15,7 @@ export function SummaryPage() {
 
   useEffect(() => {
     api
-      .get<SummaryData>('/api/summary')
+      .get<SummaryData>('/api/v1/summary')
       .then(setData)
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
   }, []);

@@ -75,7 +75,7 @@ def test_api_list_servers() -> None:
     from sentarr.main import app
 
     client = TestClient(app)
-    response = client.get("/api/servers")
+    response = client.get("/api/v1/servers")
     assert response.status_code == 200
     data = response.json()
     assert "items" in data
@@ -92,7 +92,7 @@ def test_api_create_and_get_server() -> None:
     unique_name = f"api-test-{uuid.uuid4().hex[:8]}"
     # Create
     resp = client.post(
-        "/api/servers",
+        "/api/v1/servers",
         json={
             "name": unique_name,
             "base_url": "http://plex-test:32400",
@@ -108,6 +108,6 @@ def test_api_create_and_get_server() -> None:
 
     # Get
     server_id = data["id"]
-    resp2 = client.get(f"/api/servers/{server_id}")
+    resp2 = client.get(f"/api/v1/servers/{server_id}")
     assert resp2.status_code == 200
     assert resp2.json()["name"] == unique_name

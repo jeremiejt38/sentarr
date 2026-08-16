@@ -46,6 +46,8 @@ logs/
 .env.local
 .env.production
 .env.*.local
+.secrets.env
+.secrets.env.gpg
 secrets/
 backend/sentarr/static
 backend/static

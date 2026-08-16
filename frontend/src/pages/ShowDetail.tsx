@@ -41,7 +41,7 @@ export function ShowDetail() {
   useEffect(() => {
     if (!id) return;
     api
-      .get<ShowDetailData>(`/api/shows/${id}`)
+      .get<ShowDetailData>(`/api/v1/shows/${id}`)
       .then(setShow)
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
   }, [id]);
