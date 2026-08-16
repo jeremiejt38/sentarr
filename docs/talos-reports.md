@@ -290,6 +290,8 @@ Test de l'intégration du coût monétaire et du `tokens received` dans `talos/c
 | `a9648c6e` / `3bdb84c2` `health-score-tests` | ❌ Échec (génération OK, mais `TaskStatus` passé en tant que tâche) | Implémentation manuelle du test + correction de `calculate_health_season/show` pour agréger les sous-niveaux. 7 tests passent. |
 | `04d0aa55` `qbittorrent-test` | ❌ Échec (test instancie `QBittorrentClient` qui appelle `_login` réseau) | Implémentation manuelle de `test_qbittorrent.py` : paramétrisation de `_map_status` + test d'init avec `_login` mocké. 21 tests passent. |
 | `a9446166` `transmission-status-test` | ✅ Réussi | Talos a généré `test_transmission.py` couvrant `_map_status` ; sandbox supprimé, fichier recréé dans le repo et validé (7 pass). |
+| `95e6eee8` `plex-log-duplicate-test` | ❌ Échec (Aider n'a pas réussi à insérer dans le fichier existant, timeout) | Implémentation manuelle du test de détection de doublons dans `test_plex_log_parser.py`. 3 tests passent. |
+| `cabb3fa3` `analytics-take-snapshot-test` | ❌ Échec (import incorrect `Task` au lieu de `MovieTask`/`EpisodeTask`) | Implémentation manuelle de `test_analytics_simple.py` couvrant `take_snapshot`. 47 tests passent au total. |
 | Autres jobs | 🚫 Annulés | Re-soumission avec `validate_cmd` corrigée reportée ; priorité aux tests manuels validés. |
 
 ### Apprentissages
