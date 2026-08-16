@@ -23,7 +23,7 @@ export function MoviesPage() {
     if (query) params.set('q', query);
     if (statusFilter) params.set('status', statusFilter);
     api
-      .get<Movie[]>(`/api/movies?${params.toString()}`)
+      .get<Movie[]>(`/api/v1/movies?${params.toString()}`)
       .then(setMovies)
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
   }, [query, statusFilter]);

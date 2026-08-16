@@ -1,12 +1,19 @@
 from datetime import UTC, datetime, timedelta
 from typing import cast
 
-from sqlalchemy import text
 from sqlmodel import Session, select
 
 from sentarr.config import settings
 from sentarr.models.arr import AcquisitionItem, Alert
 from sentarr.notifications.engine import notify
+
+# Mapping from item status to config threshold attribute
+_STATUS_THRESHOLDS: dict[str, str] = {
+    "searched": "alert_threshold_searched",
+    "grabbed": "alert_threshold_downloading",
+    "downloading": "alert_threshold_downloading",
+    "importing": "alert_threshold_importing",
+}
 
 
 class AlertEngine:
@@ -31,15 +38,25 @@ class AlertEngine:
         notify(title, body, alert.rule)
 
     def _check_stalled_items(self) -> list[Alert]:
-        threshold = datetime.now(UTC) - timedelta(minutes=settings.stall_threshold_minutes)
+        now = datetime.now(UTC)
+        statuses = list(_STATUS_THRESHOLDS.keys())
         items = self.session.exec(
-            select(AcquisitionItem).where(text("status IN ('grabbed', 'downloading')"))
+            select(AcquisitionItem).where(
+                AcquisitionItem.status.in_(statuses)  # type: ignore[attr-defined]
+            )
         ).all()
         created: list[Alert] = []
         for item in items:
+            threshold_attr = _STATUS_THRESHOLDS.get(
+                item.status or "", "alert_threshold_downloading"
+            )
+            threshold_minutes: int = getattr(settings, threshold_attr, 30)
+            if threshold_minutes <= 0:
+                continue
+            cutoff = now - timedelta(minutes=threshold_minutes)
             if (
                 item.updated_at
-                and item.updated_at < threshold
+                and item.updated_at < cutoff
                 and not self._exists(cast(int, item.id), "acquisition_item", "stalled")
             ):
                 created.append(
@@ -49,8 +66,8 @@ class AlertEngine:
                         severity="warning",
                         rule="stalled",
                         message=(
-                            f"{item.title} est bloqué depuis plus de "
-                            f"{settings.stall_threshold_minutes} minutes"
+                            f"{item.title} est bloqué en '{item.status}' depuis plus de "
+                            f"{threshold_minutes} minutes"
                         ),
                     )
                 )

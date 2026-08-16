@@ -2,10 +2,19 @@ from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel
 from sqlmodel import Session, select
 
+from sentarr.config import settings
 from sentarr.db import get_session
 from sentarr.models.arr import Alert
+
+
+class ThresholdsUpdate(BaseModel):
+    searched: int | None = None
+    downloading: int | None = None
+    importing: int | None = None
+    plex_overall: int | None = None
 
 router = APIRouter()
 
@@ -55,3 +64,31 @@ async def resolve_alert(alert_id: int, session: Session = Depends(get_session)) 
     session.add(alert)
     session.commit()
     return {"id": alert.id, "resolved": True}
+
+
+@router.get("/thresholds")
+async def get_thresholds() -> dict[str, int]:
+    return {
+        "searched": settings.alert_threshold_searched,
+        "downloading": settings.alert_threshold_downloading,
+        "importing": settings.alert_threshold_importing,
+        "plex_overall": settings.alert_threshold_plex_overall,
+    }
+
+
+@router.post("/thresholds")
+async def update_thresholds(body: ThresholdsUpdate) -> dict[str, Any]:
+    if body.searched is not None:
+        settings.alert_threshold_searched = body.searched
+    if body.downloading is not None:
+        settings.alert_threshold_downloading = body.downloading
+    if body.importing is not None:
+        settings.alert_threshold_importing = body.importing
+    if body.plex_overall is not None:
+        settings.alert_threshold_plex_overall = body.plex_overall
+    return {
+        "searched": settings.alert_threshold_searched,
+        "downloading": settings.alert_threshold_downloading,
+        "importing": settings.alert_threshold_importing,
+        "plex_overall": settings.alert_threshold_plex_overall,
+    }

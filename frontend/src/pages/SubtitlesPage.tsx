@@ -19,7 +19,7 @@ export function SubtitlesPage() {
 
   useEffect(() => {
     api
-      .get<{ items: SubtitleTrack[] }>('/api/subtitles')
+      .get<{ items: SubtitleTrack[] }>('/api/v1/subtitles')
       .then((d) => setTracks(d.items))
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
   }, []);

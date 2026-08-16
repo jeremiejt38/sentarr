@@ -89,7 +89,7 @@ def test_api_keys_crud() -> None:
 
     # Create
     resp = client.post(
-        "/api/auth/keys",
+        "/api/v1/auth/keys",
         json={"name": "ci-test-key", "role": "admin"},
     )
     assert resp.status_code == 201
@@ -101,14 +101,14 @@ def test_api_keys_crud() -> None:
     assert raw_key.startswith("sk-")
 
     # List
-    resp2 = client.get("/api/auth/keys")
+    resp2 = client.get("/api/v1/auth/keys")
     assert resp2.status_code == 200
     items = resp2.json()["items"]
     assert any(k["name"] == "ci-test-key" for k in items)
 
     # Revoke
     key_id = data["id"]
-    resp3 = client.delete(f"/api/auth/keys/{key_id}")
+    resp3 = client.delete(f"/api/v1/auth/keys/{key_id}")
     assert resp3.status_code == 204
 
 
@@ -120,5 +120,5 @@ def test_auth_middleware_none_mode() -> None:
 
     client = TestClient(app)
     # /api/summary should be accessible without auth in none mode
-    resp = client.get("/api/summary")
+    resp = client.get("/api/v1/summary")
     assert resp.status_code == 200

@@ -18,6 +18,21 @@ interface ApiKeyItem {
   last_used_at: string | null;
 }
 
+interface AlertThresholds {
+  searched: number;
+  downloading: number;
+  importing: number;
+  plex_overall: number;
+}
+
+interface PluginInfo {
+  name: string;
+  version: string;
+  description: string;
+  author: string;
+  active: boolean;
+}
+
 export function SettingsPage() {
   const [servers, setServers] = useState<PlexServer[]>([]);
   const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>([]);
@@ -25,25 +40,38 @@ export function SettingsPage() {
   const [newKeyName, setNewKeyName] = useState('');
   const [newKeyRole, setNewKeyRole] = useState('readonly');
   const [createdKey, setCreatedKey] = useState<string | null>(null);
+  const [thresholds, setThresholds] = useState<AlertThresholds>({ searched: 60, downloading: 30, importing: 15, plex_overall: 60 });
+  const [plugins, setPlugins] = useState<PluginInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
 
   const loadServers = useCallback(() => {
-    api.get<{ items: PlexServer[] }>('/api/servers').then((d) => setServers(d.items)).catch(() => {});
+    api.get<{ items: PlexServer[] }>('/api/v1/servers').then((d) => setServers(d.items)).catch(() => {});
   }, []);
 
   const loadKeys = useCallback(() => {
-    api.get<{ items: ApiKeyItem[] }>('/api/auth/keys').then((d) => setApiKeys(d.items)).catch(() => {});
+    api.get<{ items: ApiKeyItem[] }>('/api/v1/auth/keys').then((d) => setApiKeys(d.items)).catch(() => {});
+  }, []);
+
+  const loadThresholds = useCallback(() => {
+    api.get<AlertThresholds>('/api/v1/alerts/thresholds').then(setThresholds).catch(() => {});
+  }, []);
+
+  const loadPlugins = useCallback(() => {
+    api.get<{ items: PluginInfo[] }>('/api/v1/plugins').then((d) => setPlugins(d.items)).catch(() => {});
   }, []);
 
   useEffect(() => {
     loadServers();
     loadKeys();
-  }, [loadServers, loadKeys]);
+    loadThresholds();
+    loadPlugins();
+  }, [loadServers, loadKeys, loadThresholds, loadPlugins]);
 
   const addServer = () => {
     if (!newServer.name || !newServer.base_url || !newServer.token) return;
     api
-      .post<PlexServer>('/api/servers', newServer)
+      .post<PlexServer>('/api/v1/servers', newServer)
       .then(() => {
         setNewServer({ name: '', base_url: '', token: '', log_path: '' });
         loadServers();
@@ -54,11 +82,22 @@ export function SettingsPage() {
   const createKey = () => {
     if (!newKeyName) return;
     api
-      .post<ApiKeyItem & { raw_key: string }>('/api/auth/keys', { name: newKeyName, role: newKeyRole })
+      .post<ApiKeyItem & { raw_key: string }>('/api/v1/auth/keys', { name: newKeyName, role: newKeyRole })
       .then((data) => {
         setCreatedKey(data.raw_key);
         setNewKeyName('');
         loadKeys();
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : String(err)));
+  };
+
+  const saveThresholds = () => {
+    api
+      .post<AlertThresholds>('/api/v1/alerts/thresholds', thresholds)
+      .then((data) => {
+        setThresholds(data);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
       })
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
   };
@@ -97,6 +136,31 @@ export function SettingsPage() {
           <input placeholder="Log path (optionnel)" value={newServer.log_path} onChange={(e) => setNewServer({ ...newServer, log_path: e.target.value })} />
           <button onClick={addServer}>Ajouter</button>
         </div>
+      </section>
+
+      <section>
+        <h2>Seuils d'alerte (minutes)</h2>
+        <div className="form-row">
+          <label>
+            Recherche bloquée
+            <input type="number" min={0} value={thresholds.searched} onChange={(e) => setThresholds({ ...thresholds, searched: Number(e.target.value) })} />
+          </label>
+          <label>
+            Téléchargement bloqué
+            <input type="number" min={0} value={thresholds.downloading} onChange={(e) => setThresholds({ ...thresholds, downloading: Number(e.target.value) })} />
+          </label>
+          <label>
+            Import bloqué
+            <input type="number" min={0} value={thresholds.importing} onChange={(e) => setThresholds({ ...thresholds, importing: Number(e.target.value) })} />
+          </label>
+          <label>
+            Traitement Plex
+            <input type="number" min={0} value={thresholds.plex_overall} onChange={(e) => setThresholds({ ...thresholds, plex_overall: Number(e.target.value) })} />
+          </label>
+          <button onClick={saveThresholds}>Enregistrer</button>
+          {saved && <span className="success-text">Enregistré</span>}
+        </div>
+        <small>0 = désactivé</small>
       </section>
 
       <section>
@@ -139,6 +203,34 @@ export function SettingsPage() {
           <button onClick={createKey}>Créer</button>
         </div>
       </section>
+
+      {plugins.length > 0 && (
+        <section>
+          <h2>Plugins</h2>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Version</th>
+                <th>Description</th>
+                <th>Auteur</th>
+                <th>Actif</th>
+              </tr>
+            </thead>
+            <tbody>
+              {plugins.map((p) => (
+                <tr key={p.name}>
+                  <td>{p.name}</td>
+                  <td>{p.version}</td>
+                  <td>{p.description}</td>
+                  <td>{p.author}</td>
+                  <td>{p.active ? 'Oui' : 'Non'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
     </div>
   );
 }

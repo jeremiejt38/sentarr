@@ -7,6 +7,31 @@ et ce projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-08-17
+
+### Added
+
+- **API versioning** : tous les endpoints sous `/api/v1/` (breaking change frontend adapté).
+- **Seuils d'alerte par étape** : `searched` (60 min), `downloading` (30 min), `importing` (15 min), `plex_overall` (60 min), configurables via WebUI et API.
+- **Système de plugins** : architecture complète avec hooks, discovery via entry-points, routes et jobs planifiés par plugin. Documentation dans `docs/plugins.md`.
+- **Health endpoint enrichi** : alertes actives, isolation par instance *arr, seuils d'alerte dans la réponse.
+- **Endpoint `/api/v1/health/delays`** : délai Importé → Détecté par Plex.
+- **Métriques Prometheus complètes** : `sentarr_shows_total`, `sentarr_shows_status`, `sentarr_active_alerts`, `sentarr_plex_api_poll_duration_seconds`, `sentarr_log_lines_unparsed_total`.
+- **GitHub Actions CI/CD** : lint, tests, build frontend, build+push Docker multi-arch sur ghcr.io.
+- **docker-compose.postgres.yml** : support PostgreSQL en override.
+- **README_EN.md complet** : installation, configuration, API, plugins, troubleshooting.
+- 9 nouveaux tests (total : 90 tests).
+
+### Changed
+
+- Webhook V2 (`WEBHOOK_URL`) supprimé, remplacé par Apprise V3.
+- `stall_threshold_minutes` remplacé par 4 seuils par étape.
+- Frontend : page Paramètres enrichie (seuils d'alerte, liste des plugins).
+
+### Removed
+
+- Variable `WEBHOOK_URL` (remplacée par `NOTIFICATION_CHANNELS` Apprise).
+
 ## [0.4.0] - 2026-08-16
 
 ### Added

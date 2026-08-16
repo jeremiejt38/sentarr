@@ -55,14 +55,14 @@ export function AcquisitionPage() {
 
   useEffect(() => {
     api
-      .get<AcquisitionItem[]>('/api/acquisition')
+      .get<AcquisitionItem[]>('/api/v1/acquisition')
       .then(setItems)
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
   }, []);
 
   useEffect(() => {
     api
-      .get<{ id: number; name: string }[]>('/api/acquisition/sources')
+      .get<{ id: number; name: string }[]>('/api/v1/acquisition/sources')
       .then((data) => setSources(Object.fromEntries(data.map((s) => [s.id, s.name]))));
   }, []);
 
@@ -72,7 +72,7 @@ export function AcquisitionPage() {
       return;
     }
     api
-      .get<TimelineEvent[]>(`/api/acquisition/${selectedItem.id}/timeline`)
+      .get<TimelineEvent[]>(`/api/v1/acquisition/${selectedItem.id}/timeline`)
       .then(setTimeline)
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
   }, [selectedItem]);

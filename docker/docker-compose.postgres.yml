@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sentarr-postgres
+    restart: unless-stopped
+    networks:
+      - plex-backend
+    environment:
+      POSTGRES_DB: sentarr
+      POSTGRES_USER: sentarr
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - sentarr-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sentarr -d sentarr"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  sentarr:
+    environment:
+      DATABASE_URL: postgresql://sentarr:${POSTGRES_PASSWORD}@postgres:5432/sentarr
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  sentarr-pgdata:
