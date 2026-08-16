@@ -46,6 +46,7 @@ feat(frontend): affiche le badge de profil 4K
 - Version initiale : `v0.1.0`.
 - Incrémentation mineure (`v0.2.0`) : jalon fonctionnel (ex: fin V1, début V2).
 - Incrémentation patch (`v0.1.1`) : correction de défaut.
+- Progression attendue : `1.0.0 → 1.0.1 (patch) → 1.0.2 (patch) → 1.1.0 (mineure) → 1.1.1 (patch) → …`.
 - Aucune version majeure (`v1.0.0`) sans accord explicite.
 - Release Please gère les Release PR et les tags annotés.
 
