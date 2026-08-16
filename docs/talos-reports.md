@@ -259,3 +259,38 @@ Test de l'intégration du coût monétaire et du `tokens received` dans `talos/c
 
 - Pour les jobs Talos complexes, diviser le travail en prompts plus petits et ciblés.
 - Continuer à utiliser Talos pour des morceaux isolés après cette leçon.
+
+## 2026-08-16 — Extra credits V2/V3 + tests (en cours)
+
+### Jobs soumis
+
+| Job ID | Label | Objectif | Provider | Validation |
+|---|---|---|---|---|
+| `a9648c6e` | `health-score-tests` | Tests unitaires `sentarr/health/score.py` | `ollama/qwen2.5-coder:14b` | `uv run pytest backend/tests/test_health_score.py -q` |
+| `83e30c4a` | `download-client-tests` | Tests clients qBittorrent/Transmission | `ollama/qwen2.5-coder:14b` | `uv run pytest backend/tests/test_download_client.py -q` |
+| `855f833c` | `analytics-tests` | Tests `sentarr/analytics/snapshot.py` | `ollama/qwen2.5-coder:14b` | `uv run pytest backend/tests/test_analytics.py -q` |
+| `3044a952` | `arr-sync-timeline-tests` | Tests timeline acquisition | `ollama/qwen2.5-coder:14b` | `uv run pytest backend/tests/test_arr_sync.py -q` |
+
+### Configuration Ollama
+
+- Initialement `OLLAMA_API_BASE=http://127.0.0.1:11434` (hôte local, fallback).
+- Après mise en ligne des hôtes distants par l'utilisateur, reconfiguration en `http://10.20.0.4:11434`.
+- Daemon Talos redémarré avec `OLLAMA_API_BASE=http://10.20.0.4:11434` pour les nouveaux jobs.
+- Correction de `validate_cmd` : utiliser `PYTHONPATH=backend /home/jerem/workspace/sentarr/backend/.venv/bin/python -m pytest ...` car le venv du projet est nécessaire pour importer `sentarr`, et `uv run` ne fonctionne pas dans le sandbox.
+
+### Travail en parallèle
+
+- Mise à jour de `docs/talos-reports.md` pendant que les jobs s'exécutent.
+- Stratégie : attendre les résultats en file, reviewer chaque livrable, puis intégrer après validation.
+
+### Résultat
+
+| Job | État | Action |
+|---|---|---|
+| `a9648c6e` / `3bdb84c2` `health-score-tests` | ❌ Échec (génération OK, mais `TaskStatus` passé en tant que tâche) | Implémentation manuelle du test + correction de `calculate_health_season/show` pour agréger les sous-niveaux. 7 tests passent. |
+| Autres jobs | 🚫 Annulés | Re-soumission avec `validate_cmd` corrigée reportée ; priorité au test manuel validé. |
+
+### Apprentissages
+
+- La validation dans le sandbox doit utiliser le venv du projet (`PYTHONPATH=backend /home/jerem/workspace/sentarr/backend/.venv/bin/python -m pytest ...`).
+- L'auto-fix a tenté de corriger le test, mais le modèle a échoué à comprendre la relation SQLModel `MovieTask`/`EpisodeTask` vs `TaskStatus` ; un prompt plus précis avec un snippet de fixture correcte serait nécessaire.
