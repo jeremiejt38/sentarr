@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from sqlalchemy import create_engine
-from sqlmodel import Session, SQLModel
+from sqlmodel import Session, SQLModel, select
 
 from sentarr.collectors.plex_log_parser import parse_log_directory
 from sentarr.models.plex import Episode, LogEventRaw, Movie, Season, Show
@@ -84,3 +84,40 @@ def test_parse_log_directory_with_real_fixture() -> None:
         episode_tasks = sorted([t.task_type.value for t in episode.tasks])
         assert "scan" in episode_tasks
         assert "streams" in episode_tasks
+
+
+def test_parse_log_directory_detects_duplicate_path(tmp_path: Path) -> None:
+    engine = create_engine("sqlite:///:memory:")
+    SQLModel.metadata.create_all(engine)
+
+    log_file = tmp_path / "Plex Media Scanner.log"
+    log_file.write_text(
+        "Aug 15, 2026 00:07:47.527 [22612586757888] DEBUG - "
+        "Updating part with ID=172834 [/data/movies/duplicate.mkv]\n",
+        encoding="utf-8",
+    )
+
+    with Session(engine) as session:
+        movie1 = Movie(
+            library_id=1,
+            plex_rating_key="1",
+            title="Duplicate One",
+            path="/data/movies/duplicate.mkv",
+        )
+        movie2 = Movie(
+            library_id=1,
+            plex_rating_key="2",
+            title="Duplicate Two",
+            path="/data/movies/duplicate.mkv",
+        )
+        session.add(movie1)
+        session.add(movie2)
+        session.commit()
+
+        parse_log_directory(session, tmp_path)
+
+        event = session.exec(select(LogEventRaw)).first()
+        assert event is not None
+        assert event.parsed_event_type == "analyze_part_updated"
+        assert event.correlated_to_type is None
+        assert event.correlation_note == "duplicate_path"
