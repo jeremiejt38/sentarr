@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime
 from typing import Any, cast
 
 from sqlmodel import Session, select
@@ -141,7 +142,7 @@ def _sync_instance(session: Session, instance: ArrInstance, client: ArrClient) -
     queue = client.get_queue()
     history = client.get_history()
 
-    records = queue.get("records", [])
+    records = list(queue.get("records", []))
     records.extend(history.get("records", []))
 
     for record in records:
@@ -149,21 +150,23 @@ def _sync_instance(session: Session, instance: ArrInstance, client: ArrClient) -
         if not normalized:
             continue
 
+        external_id = normalized["external_id"]
         existing = session.exec(
             select(AcquisitionItem).where(
                 AcquisitionItem.source_id == instance.id,
-                AcquisitionItem.external_id == normalized["external_id"],
+                AcquisitionItem.external_id == external_id,
             )
         ).first()
 
         if existing:
-            existing.status = normalized["status"]
+            existing.status = _merge_status(existing.status, normalized["status"])
             existing.updated_at = now_utc()
             session.add(existing)
+            item = existing
         else:
             item = AcquisitionItem(
                 source_id=instance.id,
-                external_id=normalized["external_id"],
+                external_id=external_id,
                 client_type=instance.client_type,
                 title=normalized["title"],
                 year=normalized["year"],
@@ -175,7 +178,9 @@ def _sync_instance(session: Session, instance: ArrInstance, client: ArrClient) -
                 raw_data=json.dumps(record),
             )
             session.add(item)
-            _record_event(session, item, record.get("eventType", "unknown"), record)
+            session.flush()  # to obtain item.id before recording events
+
+        _record_event(session, item, record)
 
 
 def _normalize_record(record: dict[str, Any], instance: ArrInstance) -> dict[str, Any] | None:
@@ -187,17 +192,70 @@ def _normalize_record(record: dict[str, Any], instance: ArrInstance) -> dict[str
     return None
 
 
-def _record_event(
-    session: Session,
-    item: AcquisitionItem,
-    event_type: str,
-    event_data: dict[str, Any],
-) -> None:
+def _merge_status(current: str, incoming: str) -> str:
+    """Keep the most advanced status when merging queue and history records."""
+    order = ["unknown", "monitored", "grabbed", "downloading", "imported", "failed"]
+    try:
+        current_index = order.index(current)
+    except ValueError:
+        current_index = -1
+    try:
+        incoming_index = order.index(incoming)
+    except ValueError:
+        incoming_index = -1
+    return order[max(current_index, incoming_index)]
+
+
+def _record_event(session: Session, item: AcquisitionItem, record: dict[str, Any]) -> None:
+    event_type = record.get("eventType")
+    if not event_type:
+        event_type = _status_to_event_type(record.get("status"))
+
+    occurred_at = _parse_occurred_at(record)
+    if not event_type:
+        return
+
+    # Avoid exact duplicate events for the same item/type/time.
+    existing = session.exec(
+        select(AcquisitionEvent).where(
+            AcquisitionEvent.item_id == item.id,
+            AcquisitionEvent.event_type == event_type,
+            AcquisitionEvent.occurred_at == occurred_at,
+        )
+    ).first()
+    if existing:
+        return
+
     session.add(
         AcquisitionEvent(
             item_id=item.id,
             event_type=event_type,
-            message=event_data.get("statusMessages") or event_data.get("message"),
-            event_data=json.dumps(event_data) if event_data else None,
+            message=record.get("statusMessages") or record.get("message"),
+            event_data=json.dumps(record),
+            occurred_at=occurred_at,
         )
     )
+
+
+def _status_to_event_type(status: Any) -> str:
+    if not isinstance(status, str):
+        return "unknown"
+    mapping = {
+        "queued": "queued",
+        "downloading": "downloading",
+        "completed": "download_imported",
+        "imported": "download_imported",
+        "failed": "download_failed",
+    }
+    return mapping.get(status, status)
+
+
+def _parse_occurred_at(record: dict[str, Any]) -> datetime | None:
+    for key in ("date", "queueTime", "created", "added"):
+        value = record.get(key)
+        if isinstance(value, str):
+            try:
+                return datetime.fromisoformat(value.replace("Z", "+00:00"))
+            except ValueError:
+                continue
+    return None

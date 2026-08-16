@@ -5,6 +5,7 @@ from sqlalchemy import text
 from sqlmodel import Session, select
 
 from sentarr.db import get_session
+from sentarr.health.score import calculate_health_movie
 from sentarr.models.plex import Movie, MovieTask, TaskStatus
 from sentarr.schemas.common import MovieSummary
 
@@ -44,6 +45,7 @@ async def get_movie(movie_id: int, session: Session = Depends(get_session)) -> d
     movie = session.get(Movie, movie_id)
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
+    health = calculate_health_movie(movie)
     return {
         "id": movie.id,
         "title": movie.title,
@@ -51,6 +53,14 @@ async def get_movie(movie_id: int, session: Session = Depends(get_session)) -> d
         "path": movie.path,
         "overall_status": movie.overall_status.value,
         "progress_percent": movie.progress_percent,
+        "health_score": health.score,
+        "health": {
+            "total": health.total,
+            "completed": health.completed,
+            "in_progress": health.in_progress,
+            "error": health.error,
+            "pending": health.pending,
+        },
         "tasks": [
             {
                 "type": task.task_type.value,

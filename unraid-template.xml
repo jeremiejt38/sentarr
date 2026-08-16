@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Container version="2">
+    <Name>Sentarr</Name>
+    <Repository>ghcr.io/jeremiejt38/sentarr:latest</Repository>
+    <Registry>https://ghcr.io/jeremiejt38/sentarr</Registry>
+    <Network>bridge</Network>
+    <Shell>sh</Shell>
+    <Privileged>false</Privileged>
+    <Support>https://github.com/jeremiejt38/sentarr/issues</Support>
+    <Project>https://github.com/jeremiejt38/sentarr</Project>
+    <Overview>Self-hosted dashboard for tracking Plex media processing tasks and the Radarr/Sonarr acquisition pipeline.</Overview>
+    <Category>MediaServer: Management</Category>
+    <Icon>https://raw.githubusercontent.com/jeremiejt38/sentarr/main/frontend/public/favicon.svg</Icon>
+    <TemplateURL>https://raw.githubusercontent.com/jeremiejt38/sentarr/main/unraid-template.xml</TemplateURL>
+    <Config Name="PLEX_URL" Target="PLEX_URL" Default="http://plex:32400" Mode="" Description="Plex server URL" Type="Variable" Display="always" Required="true" Mask="false"/>
+    <Config Name="PLEX_TOKEN" Target="PLEX_TOKEN" Default="" Mode="" Description="Plex X-Plex-Token" Type="Variable" Display="always" Required="true" Mask="true"/>
+    <Config Name="PLEX_LOG_PATH" Target="PLEX_LOG_PATH" Default="/var/log/plex/Plex Media Server.log" Mode="" Description="Path to Plex Media Server.log inside the container" Type="Variable" Display="always" Required="true" Mask="false"/>
+    <Config Name="RADARR_URLS" Target="RADARR_URLS" Default="[]" Mode="" Description="JSON list of Radarr instances" Type="Variable" Display="always" Required="false" Mask="false"/>
+    <Config Name="SONARR_URLS" Target="SONARR_URLS" Default="[]" Mode="" Description="JSON list of Sonarr instances" Type="Variable" Display="always" Required="false" Mask="false"/>
+    <Config Name="DOWNLOAD_CLIENTS" Target="DOWNLOAD_CLIENTS" Default="[]" Mode="" Description="JSON list of qBittorrent/Transmission clients" Type="Variable" Display="always" Required="false" Mask="false"/>
+    <Config Name="DATABASE_URL" Target="DATABASE_URL" Default="sqlite:///app/data/sentarr.db" Mode="" Description="Database URL" Type="Variable" Display="advanced" Required="false" Mask="false"/>
+    <Config Name="DATA" Target="/app/data" Default="/mnt/user/appdata/sentarr" Mode="rw" Description="Sentarr data directory" Type="Path" Display="advanced" Required="true" Mask="false"/>
+    <Config Name="PLEX_LOGS" Target="/var/log/plex" Default="/mnt/user/appdata/plex/Library/Application Support/Plex Media Server/Logs" Mode="ro" Description="Plex logs directory" Type="Path" Display="advanced" Required="true" Mask="false"/>
+    <Config Name="WebUI" Target="8000" Default="8000" Mode="tcp" Description="Sentarr web interface" Type="Port" Display="advanced" Required="true" Mask="false"/>
+</Container>

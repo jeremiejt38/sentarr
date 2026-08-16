@@ -28,6 +28,13 @@ class Settings(BaseSettings):
     stall_threshold_minutes: int = 30
     webhook_url: str | None = None
 
+    # Download clients (V2)
+    download_clients: str = "[]"
+
+    # Health score thresholds (V2)
+    health_threshold_warning: int = 80
+    health_threshold_critical: int = 50
+
     # Auth (V3)
     auth_mode: str = "none"  # none | forms | external
 

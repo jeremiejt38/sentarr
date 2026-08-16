@@ -23,6 +23,7 @@ export function Layout() {
           <Link to="/movies">Films</Link>
           <Link to="/shows">Séries</Link>
           <Link to="/acquisition">Acquisition</Link>
+          <Link to="/download">Téléchargements</Link>
           <Link to="/alerts">Alertes</Link>
         </nav>
       </aside>

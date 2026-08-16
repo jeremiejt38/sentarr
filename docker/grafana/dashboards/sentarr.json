@@ -1,0 +1,75 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Sentarr",
+    "tags": ["sentarr", "plex", "arr"],
+    "timezone": "browser",
+    "schemaVersion": 27,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Health Score",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sentarr_health_score",
+            "legendFormat": "Health",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "steps": [
+                { "color": "red", "value": null },
+                { "color": "yellow", "value": 50 },
+                { "color": "green", "value": 80 }
+              ]
+            }
+          }
+        },
+        "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 }
+      },
+      {
+        "id": 2,
+        "title": "Movies & Episodes",
+        "type": "stat",
+        "targets": [
+          { "expr": "sentarr_movies_total", "legendFormat": "Movies", "refId": "A" },
+          { "expr": "sentarr_episodes_total", "legendFormat": "Episodes", "refId": "B" }
+        ],
+        "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 }
+      },
+      {
+        "id": 3,
+        "title": "Acquisition Items",
+        "type": "bargauge",
+        "targets": [
+          {
+            "expr": "sum by (status) (sentarr_acquisition_items_total)",
+            "legendFormat": "{{status}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 }
+      },
+      {
+        "id": 4,
+        "title": "Tasks by Status",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum by (status) (sentarr_tasks_total)",
+            "legendFormat": "{{status}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": { "h": 10, "w": 24, "x": 0, "y": 8 }
+      }
+    ]
+  },
+  "overwrite": true
+}

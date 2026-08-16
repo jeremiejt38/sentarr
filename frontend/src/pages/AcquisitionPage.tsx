@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api.client';
 import { StatusBadge } from '../components/StatusBadge/StatusBadge';
 import { ProgressBar } from '../components/ProgressBar/ProgressBar';
+import { Timeline } from '../components/Timeline/Timeline';
+import type { TimelineStep } from '../lib/arr.types';
 
 interface AcquisitionItem {
   id: number;
@@ -15,6 +17,14 @@ interface AcquisitionItem {
   updated_at: string;
 }
 
+interface TimelineEvent {
+  id: number;
+  event_type: string;
+  message: string | null;
+  occurred_at: string | null;
+  created_at: string;
+}
+
 const STATUS_PROGRESS: Record<string, number> = {
   monitored: 10,
   grabbed: 40,
@@ -24,12 +34,24 @@ const STATUS_PROGRESS: Record<string, number> = {
   unknown: 0,
 };
 
+const EVENT_ORDER = [
+  'queued',
+  'monitored',
+  'grabbed',
+  'downloading',
+  'download_imported',
+  'imported',
+  'failed',
+];
+
 export function AcquisitionPage() {
   const [items, setItems] = useState<AcquisitionItem[]>([]);
   const [sources, setSources] = useState<Record<number, string>>({});
   const [statusFilter, setStatusFilter] = useState('');
   const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<AcquisitionItem | null>(null);
+  const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
 
   useEffect(() => {
     api
@@ -43,6 +65,50 @@ export function AcquisitionPage() {
       .get<{ id: number; name: string }[]>('/api/acquisition/sources')
       .then((data) => setSources(Object.fromEntries(data.map((s) => [s.id, s.name]))));
   }, []);
+
+  useEffect(() => {
+    if (!selectedItem) {
+      setTimeline([]);
+      return;
+    }
+    api
+      .get<TimelineEvent[]>(`/api/acquisition/${selectedItem.id}/timeline`)
+      .then(setTimeline)
+      .catch((err) => setError(err instanceof Error ? err.message : String(err)));
+  }, [selectedItem]);
+
+  const timelineSteps = useMemo((): TimelineStep[] => {
+    const knownTypes = new Set(timeline.map((e) => e.event_type));
+    const latestByType: Record<string, TimelineEvent> = {};
+    for (const event of timeline) {
+      const current = latestByType[event.event_type];
+      if (
+        !current ||
+        (event.occurred_at &&
+          current.occurred_at &&
+          event.occurred_at > current.occurred_at)
+      ) {
+        latestByType[event.event_type] = event;
+      }
+    }
+
+    return EVENT_ORDER.map((eventType) => {
+      const event = latestByType[eventType];
+      let status: TimelineStep['status'] = 'pending';
+      if (event) {
+        status = eventType === 'failed' ? 'error' : 'completed';
+      } else if (knownTypes.has('failed')) {
+        status = 'not_applicable';
+      }
+      return {
+        key: eventType,
+        label: eventType.replace(/_/g, ' '),
+        status,
+        startedAt: event?.occurred_at ?? undefined,
+        errorMessage: eventType === 'failed' ? event?.message ?? undefined : undefined,
+      };
+    });
+  }, [timeline]);
 
   const filtered = useMemo(() => {
     return items.filter((item) => {
@@ -85,7 +151,11 @@ export function AcquisitionPage() {
         </thead>
         <tbody>
           {filtered.map((item) => (
-            <tr key={item.id}>
+            <tr
+              key={item.id}
+              className={selectedItem?.id === item.id ? 'selected' : ''}
+              onClick={() => setSelectedItem(item)}
+            >
               <td>
                 {item.title} {item.year ? `(${item.year})` : ''}
               </td>
@@ -101,6 +171,14 @@ export function AcquisitionPage() {
           ))}
         </tbody>
       </table>
+      {selectedItem && (
+        <div className="detail-panel">
+          <h2>
+            {selectedItem.title} {selectedItem.year ? `(${selectedItem.year})` : ''}
+          </h2>
+          <Timeline steps={timelineSteps} />
+        </div>
+      )}
     </div>
   );
 }

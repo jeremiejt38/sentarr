@@ -5,12 +5,13 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore[impo
 from sqlmodel import Session
 
 from sentarr.alerts.engine import evaluate_alerts
+from sentarr.analytics.snapshot import purge_old_log_events, take_snapshot
 from sentarr.collectors.arr_sync import sync_acquisition
 from sentarr.collectors.bazarr_sync import sync_bazarr
 from sentarr.collectors.plex_api import sync_libraries
 from sentarr.collectors.plex_log_parser import parse_log_directory
 from sentarr.config import settings
-from sentarr.db import engine, init_db
+from sentarr.db import engine
 
 logger = logging.getLogger(__name__)
 
@@ -64,8 +65,17 @@ async def sync_bazarr_job() -> None:
         logger.exception("Bazarr sync failed")
 
 
+async def analytics_snapshot_job() -> None:
+    logger.info("Starting analytics snapshot")
+    try:
+        with Session(engine) as session:
+            take_snapshot(session)
+            purge_old_log_events(session)
+    except Exception:
+        logger.exception("Analytics snapshot failed")
+
+
 def start_scheduler() -> AsyncIOScheduler:
-    init_db()
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
         lambda: asyncio.create_task(sync_plex_job()),
@@ -100,6 +110,13 @@ def start_scheduler() -> AsyncIOScheduler:
         "interval",
         seconds=settings.poll_interval_seconds,
         id="bazarr_sync",
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        lambda: asyncio.create_task(analytics_snapshot_job()),
+        "interval",
+        minutes=60,
+        id="analytics_snapshot",
         replace_existing=True,
     )
     scheduler.start()
