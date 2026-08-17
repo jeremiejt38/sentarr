@@ -27,6 +27,44 @@ from sentarr.models.plex import (
 
 logger = logging.getLogger(__name__)
 
+# Graceful degradation state
+_plex_degraded: bool = False
+_plex_degraded_reason: str = ""
+_plex_degraded_since: Any = None
+
+
+def get_degraded_status() -> dict[str, Any] | None:
+    """Return degradation info if Plex connection is in degraded mode, else None."""
+    if not _plex_degraded:
+        return None
+    return {
+        "degraded": True,
+        "reason": _plex_degraded_reason,
+        "since": _plex_degraded_since.isoformat() if _plex_degraded_since else None,
+    }
+
+
+def _set_degraded(reason: str) -> None:
+    """Set degraded mode."""
+    global _plex_degraded, _plex_degraded_reason, _plex_degraded_since
+    from datetime import UTC, datetime
+
+    if not _plex_degraded:
+        _plex_degraded = True
+        _plex_degraded_since = datetime.now(UTC)
+    _plex_degraded_reason = reason
+    logger.warning("Plex connection degraded: %s", reason)
+
+
+def _clear_degraded() -> None:
+    """Clear degraded mode after successful connection."""
+    global _plex_degraded, _plex_degraded_reason, _plex_degraded_since
+    if _plex_degraded:
+        logger.info("Plex connection restored")
+    _plex_degraded = False
+    _plex_degraded_reason = ""
+    _plex_degraded_since = None
+
 
 def get_plex_server(url: str | None = None, token: str | None = None) -> PlexServer | None:
     """Connect to a Plex server. Falls back to settings when url/token not provided."""
@@ -34,11 +72,15 @@ def get_plex_server(url: str | None = None, token: str | None = None) -> PlexSer
     _token = token or settings.plex_token
     if not _token:
         logger.warning("PLEX_TOKEN is not set; cannot connect to Plex")
+        _set_degraded("PLEX_TOKEN not configured")
         return None
     try:
-        return PlexServer(_url, _token)  # type: ignore[no-untyped-call]
-    except Exception:
+        server = PlexServer(_url, _token)  # type: ignore[no-untyped-call]
+        _clear_degraded()
+        return server
+    except Exception as exc:
         logger.exception("Failed to connect to Plex at %s", _url)
+        _set_degraded(f"Connection failed: {exc}")
         return None
 
 
