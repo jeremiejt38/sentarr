@@ -10,6 +10,7 @@ interface Show {
   year: number | null;
   overall_status: string;
   progress_percent: number;
+  health_score: number;
 }
 
 export function ShowsPage() {
@@ -61,6 +62,7 @@ export function ShowsPage() {
             <th>Année</th>
             <th>Statut</th>
             <th>Progression</th>
+            <th>Santé</th>
             <th />
           </tr>
         </thead>
@@ -75,6 +77,7 @@ export function ShowsPage() {
               <td>
                 <ProgressBar value={show.progress_percent} />
               </td>
+              <td>{show.health_score}%</td>
               <td>
                 <Link to={`/shows/${show.id}`}>Détails</Link>
               </td>

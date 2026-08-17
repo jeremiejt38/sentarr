@@ -34,6 +34,7 @@ async def list_movies(
             year=movie.year,
             overall_status=movie.overall_status,
             progress_percent=movie.progress_percent,
+            health_score=calculate_health_movie(movie).score,
             updated_at=movie.updated_at,
         )
         for movie in movies

@@ -16,6 +16,7 @@ class MovieSummary(BaseModel):
     year: int | None
     overall_status: TaskStatus
     progress_percent: int
+    health_score: int
     updated_at: datetime
 
 
@@ -41,6 +42,7 @@ class ShowSummary(BaseModel):
     year: int | None
     overall_status: TaskStatus
     progress_percent: int
+    health_score: int
     seasons: list[SeasonSummary] | None = None
 
 

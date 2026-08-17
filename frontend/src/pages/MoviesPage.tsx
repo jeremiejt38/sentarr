@@ -10,6 +10,7 @@ interface Movie {
   year: number | null;
   overall_status: string;
   progress_percent: number;
+  health_score: number;
 }
 
 export function MoviesPage() {
@@ -61,6 +62,7 @@ export function MoviesPage() {
             <th>Année</th>
             <th>Statut</th>
             <th>Progression</th>
+            <th>Santé</th>
             <th />
           </tr>
         </thead>
@@ -75,6 +77,7 @@ export function MoviesPage() {
               <td>
                 <ProgressBar value={movie.progress_percent} />
               </td>
+              <td>{movie.health_score}%</td>
               <td>
                 <Link to={`/movies/${movie.id}`}>Détails</Link>
               </td>

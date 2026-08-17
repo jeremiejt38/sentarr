@@ -94,6 +94,7 @@ async def list_shows(
             year=show.year,
             overall_status=show.overall_status,
             progress_percent=show.progress_percent,
+            health_score=calculate_health_show(show).score,
         )
         for show in shows
     ]

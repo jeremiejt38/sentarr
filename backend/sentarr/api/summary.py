@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlmodel import select
 
 from sentarr.db import get_session
+from sentarr.health.score import calculate_health_movie, calculate_health_show
 from sentarr.models.plex import Episode, Movie, Season, Show
 from sentarr.schemas.common import (
     EpisodeSummary,
@@ -22,6 +23,7 @@ def _movie_summary(movie: Movie) -> MovieSummary:
         year=movie.year,
         overall_status=movie.overall_status,
         progress_percent=movie.progress_percent,
+        health_score=calculate_health_movie(movie).score,
         updated_at=movie.updated_at,
     )
 
@@ -53,6 +55,7 @@ def _show_summary(show: Show) -> ShowSummary:
         year=show.year,
         overall_status=show.overall_status,
         progress_percent=show.progress_percent,
+        health_score=calculate_health_show(show).score,
         seasons=[_season_summary(season) for season in show.seasons] if show.seasons else None,
     )
 
