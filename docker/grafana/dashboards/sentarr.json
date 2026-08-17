@@ -10,7 +10,7 @@
       {
         "id": 1,
         "title": "Health Score",
-        "type": "stat",
+        "type": "gauge",
         "targets": [
           {
             "expr": "sentarr_health_score",
@@ -22,6 +22,7 @@
           "defaults": {
             "min": 0,
             "max": 100,
+            "unit": "percent",
             "thresholds": {
               "steps": [
                 { "color": "red", "value": null },
@@ -31,21 +32,85 @@
             }
           }
         },
-        "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 }
+        "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 }
       },
       {
         "id": 2,
-        "title": "Movies & Episodes",
+        "title": "Active Alerts",
         "type": "stat",
         "targets": [
-          { "expr": "sentarr_movies_total", "legendFormat": "Movies", "refId": "A" },
-          { "expr": "sentarr_episodes_total", "legendFormat": "Episodes", "refId": "B" }
+          { "expr": "sentarr_active_alerts", "legendFormat": "Alerts", "refId": "A" }
         ],
-        "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 }
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "steps": [
+                { "color": "green", "value": null },
+                { "color": "yellow", "value": 1 },
+                { "color": "red", "value": 5 }
+              ]
+            }
+          }
+        },
+        "gridPos": { "h": 8, "w": 6, "x": 6, "y": 0 }
       },
       {
         "id": 3,
-        "title": "Acquisition Items",
+        "title": "Movies & Shows",
+        "type": "stat",
+        "targets": [
+          { "expr": "sentarr_movies_total", "legendFormat": "Movies", "refId": "A" },
+          { "expr": "sentarr_shows_total", "legendFormat": "Shows", "refId": "B" },
+          { "expr": "sentarr_episodes_total", "legendFormat": "Episodes", "refId": "C" }
+        ],
+        "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 }
+      },
+      {
+        "id": 4,
+        "title": "Unparsed Log Lines",
+        "type": "stat",
+        "targets": [
+          { "expr": "sentarr_log_lines_unparsed_total", "legendFormat": "Unparsed", "refId": "A" }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "steps": [
+                { "color": "green", "value": null },
+                { "color": "yellow", "value": 100 },
+                { "color": "red", "value": 500 }
+              ]
+            }
+          }
+        },
+        "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 }
+      },
+      {
+        "id": 5,
+        "title": "Plex API Poll Duration",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(sentarr_plex_api_poll_duration_seconds_bucket[5m]))",
+            "legendFormat": "p95",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(sentarr_plex_api_poll_duration_seconds_bucket[5m]))",
+            "legendFormat": "p50",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s"
+          }
+        },
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+      },
+      {
+        "id": 6,
+        "title": "Acquisition Items by Status",
         "type": "bargauge",
         "targets": [
           {
@@ -54,20 +119,59 @@
             "refId": "A"
           }
         ],
-        "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 }
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
       },
       {
-        "id": 4,
-        "title": "Tasks by Status",
-        "type": "timeseries",
+        "id": 7,
+        "title": "Movies by Status",
+        "type": "piechart",
         "targets": [
           {
-            "expr": "sum by (status) (sentarr_tasks_total)",
+            "expr": "sentarr_movies_status",
             "legendFormat": "{{status}}",
             "refId": "A"
           }
         ],
-        "gridPos": { "h": 10, "w": 24, "x": 0, "y": 8 }
+        "gridPos": { "h": 8, "w": 8, "x": 0, "y": 16 }
+      },
+      {
+        "id": 8,
+        "title": "Shows by Status",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sentarr_shows_status",
+            "legendFormat": "{{status}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 8, "x": 8, "y": 16 }
+      },
+      {
+        "id": 9,
+        "title": "Episodes by Status",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sentarr_episodes_status",
+            "legendFormat": "{{status}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 8, "x": 16, "y": 16 }
+      },
+      {
+        "id": 10,
+        "title": "Tasks by Status & Type",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum by (status, item_type) (sentarr_tasks_total)",
+            "legendFormat": "{{item_type}} - {{status}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": { "h": 10, "w": 24, "x": 0, "y": 24 }
       }
     ]
   },

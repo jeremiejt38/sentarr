@@ -98,6 +98,14 @@ async def health_score(session: Session = Depends(get_session)) -> dict[str, Any
     # *arr instance isolation
     arr_health = _arr_instance_health(session)
 
+    # Plex degradation status
+    try:
+        from sentarr.collectors.plex_api import get_degraded_status
+
+        plex_degraded = get_degraded_status()
+    except (ImportError, AttributeError):
+        plex_degraded = None
+
     return {
         "score": score,
         "total": total,
@@ -107,6 +115,7 @@ async def health_score(session: Session = Depends(get_session)) -> dict[str, Any
         "total_movies": len(movies),
         "total_shows": len(shows),
         "total_episodes": len(episodes),
+        "plex_degraded": plex_degraded,
         "active_alerts": [
             {
                 "id": a.id,
@@ -145,3 +154,11 @@ async def import_to_detected(session: Session = Depends(get_session)) -> dict[st
         "count": len(delays),
         "avg_delay_seconds": round(avg_delay, 1),
     }
+
+
+@router.get("/issues")
+async def library_issues(session: Session = Depends(get_session)) -> dict[str, Any]:
+    """Detect duplicates and misidentified items in Plex libraries."""
+    from sentarr.health.anomalies import detect_all_issues
+
+    return detect_all_issues(session)
