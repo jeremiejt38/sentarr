@@ -298,3 +298,37 @@ Test de l'intégration du coût monétaire et du `tokens received` dans `talos/c
 
 - La validation dans le sandbox doit utiliser le venv du projet (`PYTHONPATH=backend /home/jerem/workspace/sentarr/backend/.venv/bin/python -m pytest ...`).
 - L'auto-fix a tenté de corriger le test, mais le modèle a échoué à comprendre la relation SQLModel `MovieTask`/`EpisodeTask` vs `TaskStatus` ; un prompt plus précis avec un snippet de fixture correcte serait nécessaire.
+
+## 2026-08-17 — Batch: sentarr-v3-remaining-phases
+
+- **Batch ID** : `b33dcb10`
+- **Provider** : auto (Ollama qwen2.5-coder:14b)
+- **Objectifs** : auto-correlation, graceful degradation, tests notifications, tests pipeline
+
+| Job ID | Label | Résultat | Notes |
+|--------|-------|----------|-------|
+| `d4b08855` | Auto-correlation acq->plex | ✅ Validation OK | Sandbox - code généré valide (ruff+mypy), mais déjà implémenté manuellement (`_correlate_unmatched`). |
+| `2322d0b7` | Graceful degradation plex | ✅ Validation OK | Sandbox - bon pattern identifié ; implémenté directement dans `plex_api.py`. |
+| `ca0738da` | Test 3 notification channels | ❌ Validation échec | Le mock ne correspondait pas à l'interface réelle de `sentarr.notifications.engine`. |
+| `4fc86348` | Test unified pipeline endpoint | ⏳ Pending | Pas encore traité (queue). |
+
+### Apprentissages
+
+- Pour les jobs de tests, inclure un snippet de l'API réelle dans le prompt pour que le mock corresponde.
+- Les jobs de code pur (modèle, fonction) validant uniquement ruff+mypy passent mieux que les tests qui nécessitent des mocks complexes.
+- Implémentation manuelle en parallèle de Talos reste la stratégie optimale : Talos valide l'approche, le dev final est fait manuellement.
+
+## 2026-08-17 — Batch: sentarr-multiuser-auth
+
+- **Batch ID** : `b86431f4`
+- **Provider** : auto
+- **Objectifs** : User model + Users API
+
+| Job ID | Label | Résultat | Notes |
+|--------|-------|----------|-------|
+| `5cbd5c85` | User model | 🚫 Annulé | Implémenté manuellement avant exécution. |
+| `b9b884a0` | Users API | 🚫 Annulé | Implémenté manuellement avant exécution. |
+
+### Apprentissages
+
+- Quand l'implémentation manuelle est rapide et que les dépendances doivent être installées (`bcrypt`, `python-jose`), mieux vaut faire soi-même plutôt qu'attendre le sandbox Talos qui n'a pas accès aux deps.
