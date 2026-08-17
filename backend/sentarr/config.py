@@ -68,7 +68,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     poll_interval_seconds: int = 60
     log_tail_interval_seconds: int = 5
-    history_retention_days: int = 30
+    history_retention_days: int = 90
     retro_scan: bool = True
     libraries_filter: str = ""
     plex_pass_enabled: str = "auto"  # auto | true | false

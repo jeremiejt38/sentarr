@@ -17,12 +17,23 @@ interface AcquisitionItem {
   updated_at: string;
 }
 
-interface TimelineEvent {
-  id: number;
-  event_type: string;
-  message: string | null;
+interface PipelineStep {
+  step: number;
+  key: string;
+  label: string;
+  phase: 'acquisition' | 'plex';
+  status: string;
   occurred_at: string | null;
-  created_at: string;
+}
+
+interface UnifiedPipeline {
+  item_id: number;
+  title: string;
+  correlated_to_type: string | null;
+  correlated_to_id: number | null;
+  steps: PipelineStep[];
+  total_steps: number;
+  import_to_detect_seconds: number | null;
 }
 
 const STATUS_PROGRESS: Record<string, number> = {
@@ -34,16 +45,6 @@ const STATUS_PROGRESS: Record<string, number> = {
   unknown: 0,
 };
 
-const EVENT_ORDER = [
-  'queued',
-  'monitored',
-  'grabbed',
-  'downloading',
-  'download_imported',
-  'imported',
-  'failed',
-];
-
 export function AcquisitionPage() {
   const [items, setItems] = useState<AcquisitionItem[]>([]);
   const [sources, setSources] = useState<Record<number, string>>({});
@@ -51,7 +52,7 @@ export function AcquisitionPage() {
   const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<AcquisitionItem | null>(null);
-  const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
+  const [pipeline, setPipeline] = useState<UnifiedPipeline | null>(null);
 
   useEffect(() => {
     api
@@ -68,47 +69,24 @@ export function AcquisitionPage() {
 
   useEffect(() => {
     if (!selectedItem) {
-      setTimeline([]);
+      setPipeline(null);
       return;
     }
     api
-      .get<TimelineEvent[]>(`/api/v1/acquisition/${selectedItem.id}/timeline`)
-      .then(setTimeline)
+      .get<UnifiedPipeline>(`/api/v1/acquisition/${selectedItem.id}/pipeline`)
+      .then(setPipeline)
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
   }, [selectedItem]);
 
   const timelineSteps = useMemo((): TimelineStep[] => {
-    const knownTypes = new Set(timeline.map((e) => e.event_type));
-    const latestByType: Record<string, TimelineEvent> = {};
-    for (const event of timeline) {
-      const current = latestByType[event.event_type];
-      if (
-        !current ||
-        (event.occurred_at &&
-          current.occurred_at &&
-          event.occurred_at > current.occurred_at)
-      ) {
-        latestByType[event.event_type] = event;
-      }
-    }
-
-    return EVENT_ORDER.map((eventType) => {
-      const event = latestByType[eventType];
-      let status: TimelineStep['status'] = 'pending';
-      if (event) {
-        status = eventType === 'failed' ? 'error' : 'completed';
-      } else if (knownTypes.has('failed')) {
-        status = 'not_applicable';
-      }
-      return {
-        key: eventType,
-        label: eventType.replace(/_/g, ' '),
-        status,
-        startedAt: event?.occurred_at ?? undefined,
-        errorMessage: eventType === 'failed' ? event?.message ?? undefined : undefined,
-      };
-    });
-  }, [timeline]);
+    if (!pipeline) return [];
+    return pipeline.steps.map((s) => ({
+      key: s.key,
+      label: `${s.step}. ${s.label}`,
+      status: s.status as TimelineStep['status'],
+      startedAt: s.occurred_at ?? undefined,
+    }));
+  }, [pipeline]);
 
   const filtered = useMemo(() => {
     return items.filter((item) => {
@@ -171,11 +149,25 @@ export function AcquisitionPage() {
           ))}
         </tbody>
       </table>
-      {selectedItem && (
+      {selectedItem && pipeline && (
         <div className="detail-panel">
           <h2>
-            {selectedItem.title} {selectedItem.year ? `(${selectedItem.year})` : ''}
+            Pipeline unifié : {selectedItem.title} {selectedItem.year ? `(${selectedItem.year})` : ''}
           </h2>
+          {pipeline.import_to_detect_seconds !== null && (
+            <p className="delay-info">
+              Délai Importé → Détecté Plex :{' '}
+              <strong>
+                {pipeline.import_to_detect_seconds < 60
+                  ? `${Math.round(pipeline.import_to_detect_seconds)}s`
+                  : `${Math.round(pipeline.import_to_detect_seconds / 60)} min`}
+              </strong>
+            </p>
+          )}
+          <div className="pipeline-phases">
+            <span className="phase-label phase-label--acq">Acquisition (1-6)</span>
+            <span className="phase-label phase-label--plex">Plex (7-16)</span>
+          </div>
           <Timeline steps={timelineSteps} />
         </div>
       )}

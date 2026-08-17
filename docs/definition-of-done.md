@@ -23,7 +23,7 @@
 - [ ] Le délai entre "Importé" (étape 6) et "Détecté par Plex" (étape 7) est visible et mis en évidence dans la timeline unifiée.
 - [ ] Un score de santé cohérent (0–100) est affiché pour chaque item, sur l'ensemble de la chaîne acquisition + Plex.
 - [ ] Une alerte se déclenche correctement au dépassement d'un seuil configuré, et se résout automatiquement dès que la situation se débloque.
-- [ ] Le webhook générique déclenche une notification vers l'URL configurée lors de l'apparition/résolution d'une alerte.
+- [ ] Le système de notifications Apprise déclenche une notification multi-canaux (Discord, ntfy, etc.) lors de l'apparition/résolution d'une alerte.
 - [ ] Aucune action d'écriture n'est effectuée sur Radarr, Sonarr ou Plex.
 - [ ] L'historique des tentatives d'acquisition (release échouée puis nouvelle recherche) reste visible.
 - [ ] Panne d'une instance *arr isolée et visible dans `/api/v1/health` ; le reste de l'application continue de fonctionner.

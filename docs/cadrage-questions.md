@@ -109,13 +109,13 @@ Ce document reprend les questionnaires des cahiers des charges V1, V2 et V3, ave
 
 **Question** : Seuils de temps par défaut pour le déclenchement des alertes.
 
-**Réponse proposée** :
+**Réponse** :
 - Recherche bloquée (`searched`) : 60 min.
 - Téléchargement bloqué (`downloading`) : 30 min.
 - Import bloqué (`importing`) : 15 min.
 - Traitement Plex bloqué (`overall`) : 60 min.
 
-**Statut** : À confirmer par l'utilisateur.
+**Statut** : Implémenté. Valeurs par défaut : 60/30/15/60 minutes. Configurable via `GET/POST /api/v1/alerts/thresholds` et la page Paramètres du WebUI.
 
 ### 4. Canal de notification V2
 
