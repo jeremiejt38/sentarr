@@ -40,6 +40,7 @@ packages = ["sentarr"]
 [tool.ruff]
 target-version = "py312"
 line-length = 100
+extend-exclude = ["alembic/versions"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
@@ -51,6 +52,7 @@ strict = true
 warn_return_any = true
 warn_unused_ignores = true
 plugins = ["pydantic.mypy"]
+exclude = ["alembic/versions", "tests"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
