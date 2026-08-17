@@ -24,6 +24,7 @@ from sentarr.api import (
     shows,
     subtitles,
     summary,
+    users,
 )
 from sentarr.api import (
     plugins as plugins_api,
@@ -74,6 +75,7 @@ app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["analytic
 app.include_router(download.router, prefix="/api/v1/download", tags=["download"])
 app.include_router(servers.router, prefix="/api/v1/servers", tags=["servers"])
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
 app.include_router(plugins_api.router, prefix="/api/v1/plugins", tags=["plugins"])
 app.include_router(ws_module.router, prefix="/ws", tags=["websocket"])
 

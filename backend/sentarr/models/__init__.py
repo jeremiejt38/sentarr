@@ -34,6 +34,7 @@ from sentarr.models.plex import (
     TaskStatus,
 )
 from sentarr.models.subtitles import SubtitleTrack
+from sentarr.models.user import User, UserRole
 
 __all__ = [
     "AcquisitionEvent",
@@ -68,5 +69,7 @@ __all__ = [
     "ShowTaskType",
     "SubtitleTrack",
     "TaskStatus",
+    "User",
+    "UserRole",
     "parse_arr_urls",
 ]

@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore  # type: ignore[import-untyped]
 from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore[import-untyped]
 from sqlmodel import Session
 
@@ -83,7 +84,8 @@ async def analytics_snapshot_job() -> None:
 
 
 def start_scheduler() -> AsyncIOScheduler:
-    scheduler = AsyncIOScheduler()
+    jobstores = {"default": SQLAlchemyJobStore(engine=engine)}
+    scheduler = AsyncIOScheduler(jobstores=jobstores)
     scheduler.add_job(
         lambda: asyncio.create_task(sync_plex_job()),
         "interval",

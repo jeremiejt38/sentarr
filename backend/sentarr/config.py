@@ -47,6 +47,7 @@ class Settings(BaseSettings):
     # Auth (V3)
     auth_mode: str = "none"  # none | api_key | forms | external
     sentarr_admin_api_key: str = ""  # bootstrap admin key from env
+    secret_key: str = "change-me-in-production"  # JWT signing key
 
     # Extensions (V3) — single-instance legacy
     bazarr_url: str | None = None
