@@ -1,19 +1,19 @@
 """initial
 
-Revision ID: 0e253b637116
+Revision ID: 5921e715a15b
 Revises: 
-Create Date: 2026-08-16 20:41:36.443113
+Create Date: 2026-08-29 15:14:03.080968
 
 """
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-import sqlmodel
+import sqlmodel  # noqa: F401
 
 
 # revision identifiers, used by Alembic.
-revision: str = '0e253b637116'
+revision: str = '5921e715a15b'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -36,6 +36,30 @@ def upgrade() -> None:
     )
     op.create_index('ix_alerts_created_at', 'alerts', ['created_at'], unique=False)
     op.create_index('ix_alerts_item_type', 'alerts', ['target_type', 'target_id'], unique=False)
+    op.create_table('analytics_snapshots',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('bucket', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('metric', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('value', sa.Float(), nullable=False),
+    sa.Column('dimensions', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_analytics_snapshots_bucket', 'analytics_snapshots', ['bucket'], unique=False)
+    op.create_index('ix_analytics_snapshots_created_at', 'analytics_snapshots', ['created_at'], unique=False)
+    op.create_table('api_keys',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('key_hash', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('key_prefix', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('role', sa.Enum('ADMIN', 'READONLY', name='apikeyrole'), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('last_used_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_api_keys_key_hash', 'api_keys', ['key_hash'], unique=True)
+    op.create_index(op.f('ix_api_keys_name'), 'api_keys', ['name'], unique=False)
     op.create_table('arr_instances',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
@@ -49,19 +73,6 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_arr_instances_name'), 'arr_instances', ['name'], unique=False)
-    op.create_table('libraries',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('plex_server_id', sa.Integer(), nullable=True),
-    sa.Column('plex_library_key', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('type', sa.Enum('MOVIE', 'SHOW', name='librarytype'), nullable=False),
-    sa.Column('path', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index('ix_libraries_plex_library_key', 'libraries', ['plex_library_key'], unique=False)
-    op.create_index('ix_libraries_type', 'libraries', ['type'], unique=False)
     op.create_table('log_events_raw',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('raw_line', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
@@ -71,11 +82,31 @@ def upgrade() -> None:
     sa.Column('parsed_event_type', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('correlated_to_type', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('correlated_to_id', sa.Integer(), nullable=True),
+    sa.Column('correlation_note', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index('ix_log_events_raw_line_hash', 'log_events_raw', ['line_hash'], unique=True)
     op.create_index('ix_log_events_raw_timestamp_parsed', 'log_events_raw', ['timestamp', 'parsed'], unique=False)
+    op.create_table('log_file_states',
+    sa.Column('file_path', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('last_offset', sa.Integer(), nullable=False),
+    sa.Column('last_size', sa.Integer(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.PrimaryKeyConstraint('file_path')
+    )
+    op.create_table('plex_servers',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('base_url', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('token', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('log_path', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_plex_servers_name'), 'plex_servers', ['name'], unique=True)
     op.create_table('subtitle_tracks',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('episode_id', sa.Integer(), nullable=True),
@@ -84,12 +115,26 @@ def upgrade() -> None:
     sa.Column('forced', sa.Boolean(), nullable=False),
     sa.Column('path', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('provider', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('source_name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('downloaded_at', sa.DateTime(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index('ix_subtitle_tracks_episode_id', 'subtitle_tracks', ['episode_id'], unique=False)
+    op.create_table('users',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('username', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('email', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('password_hash', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('role', sa.Enum('ADMIN', 'USER', 'READONLY', name='userrole'), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('last_login_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_users_username'), 'users', ['username'], unique=True)
     op.create_table('acquisition_items',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('source_id', sa.Integer(), nullable=False),
@@ -113,6 +158,112 @@ def upgrade() -> None:
     op.create_index('ix_acquisition_items_correlated_to_type', 'acquisition_items', ['correlated_to_type'], unique=False)
     op.create_index('ix_acquisition_items_external_id', 'acquisition_items', ['source_id', 'external_id'], unique=False)
     op.create_index('ix_acquisition_items_status', 'acquisition_items', ['status'], unique=False)
+    op.create_table('arr_movies',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('source_id', sa.Integer(), nullable=False),
+    sa.Column('external_id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('title', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('year', sa.Integer(), nullable=True),
+    sa.Column('status', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('quality_profile_id', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('root_folder_path', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('tmdb_id', sa.Integer(), nullable=True),
+    sa.Column('imdb_id', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('raw_data', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['source_id'], ['arr_instances.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_arr_movies_source_id_external_id', 'arr_movies', ['source_id', 'external_id'], unique=True)
+    op.create_table('arr_series',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('source_id', sa.Integer(), nullable=False),
+    sa.Column('external_id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('title', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('year', sa.Integer(), nullable=True),
+    sa.Column('status', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('quality_profile_id', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('root_folder_path', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('tvdb_id', sa.Integer(), nullable=True),
+    sa.Column('imdb_id', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('raw_data', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['source_id'], ['arr_instances.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_arr_series_source_id_external_id', 'arr_series', ['source_id', 'external_id'], unique=True)
+    op.create_table('libraries',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('plex_server_id', sa.Integer(), nullable=True),
+    sa.Column('plex_library_key', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('type', sa.Enum('MOVIE', 'SHOW', name='librarytype'), nullable=False),
+    sa.Column('path', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['plex_server_id'], ['plex_servers.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_libraries_plex_library_key', 'libraries', ['plex_library_key'], unique=False)
+    op.create_index('ix_libraries_type', 'libraries', ['type'], unique=False)
+    op.create_table('quality_profiles',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('source_id', sa.Integer(), nullable=False),
+    sa.Column('external_id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('cutoff_format_score', sa.Integer(), nullable=True),
+    sa.Column('min_format_score', sa.Integer(), nullable=True),
+    sa.Column('items', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['source_id'], ['arr_instances.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_quality_profiles_source_id_name', 'quality_profiles', ['source_id', 'name'], unique=True)
+    op.create_table('root_folders',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('source_id', sa.Integer(), nullable=False),
+    sa.Column('path', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('free_space', sa.Integer(), nullable=True),
+    sa.Column('unmapped_folders', sa.Integer(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['source_id'], ['arr_instances.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_root_folders_source_id_path', 'root_folders', ['source_id', 'path'], unique=True)
+    op.create_table('acquisition_events',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('item_id', sa.Integer(), nullable=False),
+    sa.Column('event_type', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('message', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('event_data', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('occurred_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['item_id'], ['acquisition_items.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_acquisition_events_item_id', 'acquisition_events', ['item_id'], unique=False)
+    op.create_index('ix_acquisition_events_occurred_at', 'acquisition_events', ['occurred_at'], unique=False)
+    op.create_table('arr_episodes',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('source_id', sa.Integer(), nullable=False),
+    sa.Column('series_id', sa.Integer(), nullable=False),
+    sa.Column('external_id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('season_number', sa.Integer(), nullable=True),
+    sa.Column('episode_number', sa.Integer(), nullable=True),
+    sa.Column('title', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('status', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('raw_data', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['series_id'], ['arr_series.id'], ),
+    sa.ForeignKeyConstraint(['source_id'], ['arr_instances.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_arr_episodes_series_id_external_id', 'arr_episodes', ['series_id', 'external_id'], unique=True)
     op.create_table('movies',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('library_id', sa.Integer(), nullable=False),
@@ -147,17 +298,6 @@ def upgrade() -> None:
     op.create_index('ix_shows_library_id', 'shows', ['library_id'], unique=False)
     op.create_index('ix_shows_overall_status', 'shows', ['overall_status'], unique=False)
     op.create_index('ix_shows_plex_rating_key', 'shows', ['plex_rating_key'], unique=True)
-    op.create_table('acquisition_events',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('item_id', sa.Integer(), nullable=False),
-    sa.Column('event_type', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('message', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('event_data', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['item_id'], ['acquisition_items.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index('ix_acquisition_events_item_id', 'acquisition_events', ['item_id'], unique=False)
     op.create_table('movie_tasks',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('movie_id', sa.Integer(), nullable=False),
@@ -270,8 +410,6 @@ def downgrade() -> None:
     op.drop_index('ix_movie_tasks_task_type', table_name='movie_tasks')
     op.drop_index('ix_movie_tasks_movie_id', table_name='movie_tasks')
     op.drop_table('movie_tasks')
-    op.drop_index('ix_acquisition_events_item_id', table_name='acquisition_events')
-    op.drop_table('acquisition_events')
     op.drop_index('ix_shows_plex_rating_key', table_name='shows')
     op.drop_index('ix_shows_overall_status', table_name='shows')
     op.drop_index('ix_shows_library_id', table_name='shows')
@@ -280,20 +418,44 @@ def downgrade() -> None:
     op.drop_index('ix_movies_overall_status', table_name='movies')
     op.drop_index('ix_movies_library_id', table_name='movies')
     op.drop_table('movies')
+    op.drop_index('ix_arr_episodes_series_id_external_id', table_name='arr_episodes')
+    op.drop_table('arr_episodes')
+    op.drop_index('ix_acquisition_events_occurred_at', table_name='acquisition_events')
+    op.drop_index('ix_acquisition_events_item_id', table_name='acquisition_events')
+    op.drop_table('acquisition_events')
+    op.drop_index('ix_root_folders_source_id_path', table_name='root_folders')
+    op.drop_table('root_folders')
+    op.drop_index('ix_quality_profiles_source_id_name', table_name='quality_profiles')
+    op.drop_table('quality_profiles')
+    op.drop_index('ix_libraries_type', table_name='libraries')
+    op.drop_index('ix_libraries_plex_library_key', table_name='libraries')
+    op.drop_table('libraries')
+    op.drop_index('ix_arr_series_source_id_external_id', table_name='arr_series')
+    op.drop_table('arr_series')
+    op.drop_index('ix_arr_movies_source_id_external_id', table_name='arr_movies')
+    op.drop_table('arr_movies')
     op.drop_index('ix_acquisition_items_status', table_name='acquisition_items')
     op.drop_index('ix_acquisition_items_external_id', table_name='acquisition_items')
     op.drop_index('ix_acquisition_items_correlated_to_type', table_name='acquisition_items')
     op.drop_table('acquisition_items')
+    op.drop_index(op.f('ix_users_username'), table_name='users')
+    op.drop_table('users')
     op.drop_index('ix_subtitle_tracks_episode_id', table_name='subtitle_tracks')
     op.drop_table('subtitle_tracks')
+    op.drop_index(op.f('ix_plex_servers_name'), table_name='plex_servers')
+    op.drop_table('plex_servers')
+    op.drop_table('log_file_states')
     op.drop_index('ix_log_events_raw_timestamp_parsed', table_name='log_events_raw')
     op.drop_index('ix_log_events_raw_line_hash', table_name='log_events_raw')
     op.drop_table('log_events_raw')
-    op.drop_index('ix_libraries_type', table_name='libraries')
-    op.drop_index('ix_libraries_plex_library_key', table_name='libraries')
-    op.drop_table('libraries')
     op.drop_index(op.f('ix_arr_instances_name'), table_name='arr_instances')
     op.drop_table('arr_instances')
+    op.drop_index(op.f('ix_api_keys_name'), table_name='api_keys')
+    op.drop_index('ix_api_keys_key_hash', table_name='api_keys')
+    op.drop_table('api_keys')
+    op.drop_index('ix_analytics_snapshots_created_at', table_name='analytics_snapshots')
+    op.drop_index('ix_analytics_snapshots_bucket', table_name='analytics_snapshots')
+    op.drop_table('analytics_snapshots')
     op.drop_index('ix_alerts_item_type', table_name='alerts')
     op.drop_index('ix_alerts_created_at', table_name='alerts')
     op.drop_table('alerts')

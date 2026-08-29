@@ -1,5 +1,6 @@
-import asyncio
 import logging
+from collections.abc import Callable
+from typing import Any
 
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore  # type: ignore[import-untyped]
 from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore[import-untyped]
@@ -83,50 +84,60 @@ async def analytics_snapshot_job() -> None:
         logger.exception("Analytics snapshot failed")
 
 
+async def _dispatch(job: Callable[[], Any]) -> None:
+    await job()
+
+
 def start_scheduler() -> AsyncIOScheduler:
     jobstores = {"default": SQLAlchemyJobStore(engine=engine)}
     scheduler = AsyncIOScheduler(jobstores=jobstores)
     scheduler.add_job(
-        lambda: asyncio.create_task(sync_plex_job()),
+        _dispatch,
         "interval",
         seconds=settings.poll_interval_seconds,
         id="plex_sync",
         replace_existing=True,
+        args=(sync_plex_job,),
     )
     scheduler.add_job(
-        lambda: asyncio.create_task(parse_plex_logs_job()),
+        _dispatch,
         "interval",
         seconds=settings.poll_interval_seconds,
         id="plex_log_parse",
         replace_existing=True,
+        args=(parse_plex_logs_job,),
     )
     scheduler.add_job(
-        lambda: asyncio.create_task(sync_arr_job()),
+        _dispatch,
         "interval",
         seconds=settings.arr_poll_interval_seconds,
         id="arr_sync",
         replace_existing=True,
+        args=(sync_arr_job,),
     )
     scheduler.add_job(
-        lambda: asyncio.create_task(evaluate_alerts_job()),
+        _dispatch,
         "interval",
         seconds=settings.arr_poll_interval_seconds,
         id="alert_engine",
         replace_existing=True,
+        args=(evaluate_alerts_job,),
     )
     scheduler.add_job(
-        lambda: asyncio.create_task(sync_bazarr_job()),
+        _dispatch,
         "interval",
         seconds=settings.poll_interval_seconds,
         id="bazarr_sync",
         replace_existing=True,
+        args=(sync_bazarr_job,),
     )
     scheduler.add_job(
-        lambda: asyncio.create_task(analytics_snapshot_job()),
+        _dispatch,
         "interval",
         minutes=60,
         id="analytics_snapshot",
         replace_existing=True,
+        args=(analytics_snapshot_job,),
     )
     scheduler.start()
     logger.info("Scheduler started with interval %ss", settings.poll_interval_seconds)

@@ -13,10 +13,10 @@ from sentarr.config import settings
 # access to the values within the .ini file in use.
 config = context.config
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+# Do not reconfigure logging here: it would override the application logging
+# setup and hide migration errors during startup.
+# if config.config_file_name is not None:
+#     fileConfig(config.config_file_name)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
@@ -60,7 +60,7 @@ def run_migrations_online() -> None:
 
     """
     section = config.get_section(config.config_ini_section, {})
-    section.setdefault("sqlalchemy.url", settings.database_url)
+    section["sqlalchemy.url"] = settings.database_url
     connectable = engine_from_config(
         section,
         prefix="sqlalchemy.",
