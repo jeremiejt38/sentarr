@@ -8,6 +8,11 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        clientsClaim: true,
+        skipWaiting: true,
+        navigateFallbackDenylist: [/^\/api\//, /^\/ws/],
+      },
       manifest: {
         name: 'Sentarr',
         short_name: 'Sentarr',
