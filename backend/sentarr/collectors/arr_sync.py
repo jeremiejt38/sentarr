@@ -14,6 +14,8 @@ from sentarr.models.arr import (
     AcquisitionItem,
     ArrClientType,
     ArrInstance,
+    QualityProfile,
+    RootFolder,
     now_utc,
     parse_arr_urls,
 )
@@ -82,12 +84,75 @@ def sync_acquisition(session: Session) -> None:
     for instance in instances:
         try:
             with _make_client(instance) as client:
+                _sync_arr_metadata(session, instance, client)
                 _sync_instance(session, instance, client)
         except Exception:
             logger.exception("Failed to sync %s", instance.name)
 
     _correlate_unmatched(session)
     session.commit()
+
+
+def _sync_arr_metadata(
+    session: Session, instance: ArrInstance, client: ArrClient
+) -> None:
+    """Sync quality profiles and root folders for an *arr instance."""
+    try:
+        profiles = client.get_quality_profiles()
+    except Exception:
+        logger.exception("Failed to fetch quality profiles from %s", instance.name)
+        profiles = []
+
+    if isinstance(profiles, list):
+        existing = {
+            (p.name, p.items)
+            for p in session.exec(
+                select(QualityProfile).where(QualityProfile.source_id == instance.id)
+            ).all()
+        }
+        for raw in profiles:
+            name = raw.get("name")
+            if not name:
+                continue
+            items = json.dumps(raw.get("items"))
+            if (name, items) in existing:
+                continue
+            session.add(
+                QualityProfile(
+                    source_id=instance.id,
+                    external_id=str(raw.get("id", "")),
+                    name=name,
+                    items=items,
+                )
+            )
+
+    try:
+        roots = client.get_root_folders()
+    except Exception:
+        logger.exception("Failed to fetch root folders from %s", instance.name)
+        roots = []
+
+    if isinstance(roots, list):
+        existing_paths = {
+            p.path
+            for p in session.exec(
+                select(RootFolder).where(RootFolder.source_id == instance.id)
+            ).all()
+        }
+        for raw in roots:
+            path = raw.get("path")
+            if not path:
+                continue
+            if path in existing_paths:
+                continue
+            session.add(
+                RootFolder(
+                    source_id=instance.id,
+                    path=path,
+                    accessible=raw.get("accessible", True),
+                    free_space=raw.get("freeSpace"),
+                )
+            )
 
 
 def _correlate_unmatched(session: Session) -> int:

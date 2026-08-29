@@ -1,0 +1,75 @@
+services:
+  sentarr:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: sentarr
+    restart: unless-stopped
+    networks:
+      - plex-backend
+    environment:
+      - PLEX_URL=${PLEX_URL:-http://plex:32400}
+      - PLEX_TOKEN=${PLEX_TOKEN}
+      - PLEX_LOG_PATH=${PLEX_LOG_PATH:-/var/log/plex/Plex Media Server.log}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///app/data/sentarr.db}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - POLL_INTERVAL_SECONDS=${POLL_INTERVAL_SECONDS:-60}
+      - LOG_TAIL_INTERVAL_SECONDS=${LOG_TAIL_INTERVAL_SECONDS:-5}
+      - HISTORY_RETENTION_DAYS=${HISTORY_RETENTION_DAYS:-90}
+      - RETRO_SCAN=${RETRO_SCAN:-true}
+      - LIBRARIES_FILTER=${LIBRARIES_FILTER:-}
+      - PLEX_PASS_ENABLED=${PLEX_PASS_ENABLED:-auto}
+      - AUTH_MODE=${AUTH_MODE:-none}
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - SENTARR_ADMIN_API_KEY=${SENTARR_ADMIN_API_KEY:-}
+      - HOST=0.0.0.0
+      - PORT=8000
+    volumes:
+      - ${SENTARR_DATA:-./data}:/app/data
+      - ${PLEX_LOG_HOST_PATH:-/mnt/user/appdata/plex/Library/Application Support/Plex Media Server/Logs}:/var/log/plex:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sentarr.rule=Host(`sentarr.example.invalid`)"
+      - "traefik.http.routers.sentarr.entrypoints=https"
+      - "traefik.http.routers.sentarr.tls.certresolver=cloudflare"
+      - "traefik.http.routers.sentarr.middlewares=private-network@file"
+      - "traefik.http.services.sentarr.loadbalancer.server.port=8000"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: sentarr-prometheus
+    restart: unless-stopped
+    networks:
+      - plex-backend
+    volumes:
+      - ./docker/prometheus:/etc/prometheus:ro
+      - prometheus-data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sentarr-grafana
+    restart: unless-stopped
+    networks:
+      - plex-backend
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sentarr-grafana.rule=Host(`grafana.example.invalid`)"
+      - "traefik.http.routers.sentarr-grafana.entrypoints=https"
+      - "traefik.http.routers.sentarr-grafana.tls.certresolver=cloudflare"
+      - "traefik.http.routers.sentarr-grafana.middlewares=private-network@file"
+      - "traefik.http.services.sentarr-grafana.loadbalancer.server.port=3000"
+
+networks:
+  plex-backend:
+    external: true
+
+volumes:
+  prometheus-data:
+  grafana-data:

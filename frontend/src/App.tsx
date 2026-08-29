@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './pages/Layout';
+import { LoginPage } from './pages/LoginPage';
 import { SummaryPage } from './pages/SummaryPage';
 import { MoviesPage } from './pages/MoviesPage';
 import { MovieDetail } from './pages/MovieDetail';
@@ -15,10 +16,15 @@ import './styles/theme.css';
 import './app.css';
 
 function App() {
+  const isLoggedIn = Boolean(localStorage.getItem('sentarr_token'));
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Layout />}>
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/"
+          element={isLoggedIn ? <Layout /> : <Navigate to="/login" replace />}
+        >
           <Route index element={<SummaryPage />} />
           <Route path="movies" element={<MoviesPage />} />
           <Route path="movies/:id" element={<MovieDetail />} />

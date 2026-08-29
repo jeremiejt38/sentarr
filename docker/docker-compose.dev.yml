@@ -1,0 +1,29 @@
+services:
+  sentarr:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: sentarr-dev
+    restart: "no"
+    ports:
+      - "8000:8000"
+    environment:
+      - PLEX_URL=${PLEX_URL:-http://plex:32400}
+      - PLEX_TOKEN=${PLEX_TOKEN}
+      - PLEX_LOG_PATH=${PLEX_LOG_PATH:-}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///app/data/sentarr.db}
+      - LOG_LEVEL=${LOG_LEVEL:-DEBUG}
+      - POLL_INTERVAL_SECONDS=${POLL_INTERVAL_SECONDS:-60}
+      - LOG_TAIL_INTERVAL_SECONDS=${LOG_TAIL_INTERVAL_SECONDS:-5}
+      - HISTORY_RETENTION_DAYS=${HISTORY_RETENTION_DAYS:-90}
+      - RETRO_SCAN=${RETRO_SCAN:-true}
+      - LIBRARIES_FILTER=${LIBRARIES_FILTER:-}
+      - PLEX_PASS_ENABLED=${PLEX_PASS_ENABLED:-auto}
+      - AUTH_MODE=${AUTH_MODE:-none}
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-do-not-use}
+      - SENTARR_ADMIN_API_KEY=${SENTARR_ADMIN_API_KEY:-}
+      - HOST=0.0.0.0
+      - PORT=8000
+    volumes:
+      - ${SENTARR_DATA:-./data}:/app/data
+      - ${PLEX_LOG_HOST_PATH:-}:/var/log/plex:ro

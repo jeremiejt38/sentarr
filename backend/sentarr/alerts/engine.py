@@ -7,12 +7,13 @@ from sentarr.config import settings
 from sentarr.models.arr import AcquisitionItem, Alert
 from sentarr.notifications.engine import notify
 
-# Mapping from item status to config threshold attribute
+# Mapping from item status to config threshold attribute.
+# Acquisition statuses are: monitored, grabbed, downloading, imported, failed, unknown.
 _STATUS_THRESHOLDS: dict[str, str] = {
-    "searched": "alert_threshold_searched",
+    "monitored": "alert_threshold_searched",  # Item seen but no release grabbed yet
     "grabbed": "alert_threshold_downloading",
     "downloading": "alert_threshold_downloading",
-    "importing": "alert_threshold_importing",
+    "imported": "alert_threshold_importing",  # Grabbed/imported, waiting for Plex detection
 }
 
 

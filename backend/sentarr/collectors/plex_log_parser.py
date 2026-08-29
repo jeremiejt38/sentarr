@@ -8,11 +8,13 @@ from typing import Any
 from sqlmodel import Session, select
 
 from sentarr.config import settings
+from sentarr.health.propagate import propagate_item
 from sentarr.models.plex import (
     Episode,
     EpisodeTask,
     EpisodeTaskType,
     LogEventRaw,
+    LogFileState,
     Movie,
     MovieTask,
     MovieTaskType,
@@ -249,8 +251,14 @@ def _update_task_status(
 ) -> None:
     if target_type == "movie":
         _update_movie_task(session, target_id, event_type, timestamp)
+        movie = session.get(Movie, target_id)
+        if movie:
+            propagate_item(session, movie)
     elif target_type == "episode":
         _update_episode_task(session, target_id, event_type, timestamp)
+        episode = session.get(Episode, target_id)
+        if episode:
+            propagate_item(session, episode)
 
 
 def _already_seen(session: Session, line_hash: str) -> bool:
@@ -302,11 +310,34 @@ def _parse_single_dir(session: Session, path: Path) -> int:
 
 
 def _parse_file(session: Session, log_file: Path) -> int:
+    """Parse a log file starting from the last known byte offset."""
+    path_str = str(log_file)
+    current_size = log_file.stat().st_size
+    state = session.get(LogFileState, path_str)
+    if not state:
+        state = LogFileState(file_path=path_str, last_offset=0, last_size=0)
+        session.add(state)
+
+    # Log rotation / shrink: reset offset if the file got smaller.
+    if current_size < state.last_size:
+        state.last_offset = 0
+
+    start_offset = state.last_offset
     inserted = 0
     event_type: str | None = None
     data: dict[str, Any] = {}
-    with log_file.open("r", encoding="utf-8", errors="replace") as f:
-        for raw_line in f:
+    with log_file.open("rb") as f:
+        if start_offset > 0:
+            # Make sure the first byte we read is right after a newline,
+            # otherwise skip the partial line.
+            f.seek(max(0, start_offset - 1))
+            byte_before = f.read(1)
+            f.seek(start_offset)
+            if byte_before != b"\n":
+                f.readline()  # discard partial first line
+
+        for raw_bytes in f:
+            raw_line = raw_bytes.decode("utf-8", errors="replace")
             line = raw_line.rstrip("\n")
             line_hash = hashlib.sha256(line.encode("utf-8")).hexdigest()
             if _already_seen(session, line_hash):
@@ -352,4 +383,9 @@ def _parse_file(session: Session, log_file: Path) -> int:
 
             if inserted % 1000 == 0:
                 session.flush()
+
+    state.last_size = current_size
+    state.last_offset = current_size
+    state.updated_at = datetime.now(UTC)
+    session.add(state)
     return inserted
