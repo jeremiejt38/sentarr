@@ -7,6 +7,12 @@ from sentarr.main import app
 client = TestClient(app)
 
 
+def test_auth_config() -> None:
+    resp = client.get("/api/v1/auth/config")
+    assert resp.status_code == 200
+    assert resp.json() == {"required": False}
+
+
 def test_summary_endpoint() -> None:
     resp = client.get("/api/v1/summary")
     assert resp.status_code == 200
