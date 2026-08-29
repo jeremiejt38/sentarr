@@ -1,9 +1,10 @@
 import logging
-import os
 from datetime import UTC, datetime
+from typing import Any
 
 from fastapi import HTTPException, Request
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from jose import JWTError, jwt  # type: ignore[import-untyped]
 from sqlmodel import Session, select
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
@@ -11,13 +12,20 @@ from starlette.responses import Response
 from sentarr.config import settings
 from sentarr.db import engine
 from sentarr.models.auth import ApiKey
+from sentarr.models.user import User
 
 logger = logging.getLogger(__name__)
 
 security = HTTPBasic(auto_error=False)
 
 PUBLIC_PATHS = frozenset(
-    {"/health", "/metrics", "/docs", "/openapi.json", "/api/v1/auth/login"}
+    {
+        "/health",
+        "/metrics",
+        "/docs",
+        "/openapi.json",
+        "/api/v1/users/login",
+    }
 )
 
 
@@ -71,14 +79,57 @@ class AuthMiddleware(BaseHTTPMiddleware):
             request.state.user = user
             return await call_next(request)
 
-        # forms / basic fallback
-        auth = request.headers.get("Authorization")
-        if not auth:
-            raise HTTPException(status_code=401, detail="Missing credentials")
-        return await call_next(request)
+        # forms / JWT
+        if settings.auth_mode == "forms":
+            payload = _extract_jwt(request)
+            if not payload:
+                raise HTTPException(status_code=401, detail="Missing or invalid JWT")
+            request.state.user = payload["username"]
+            request.state.role = payload["role"]
+            return await call_next(request)
+
+        # basic
+        credentials = await security(request)
+        if credentials and _verify_user(credentials):
+            request.state.user = credentials.username
+            request.state.role = _get_user_role(credentials.username)
+            return await call_next(request)
+
+        raise HTTPException(status_code=401, detail="Invalid credentials")
 
 
-def verify_credentials(credentials: HTTPBasicCredentials) -> bool:
-    expected_user = os.environ.get("SENTARR_USERNAME", "admin")
-    expected_pass = os.environ.get("SENTARR_PASSWORD", "admin")
-    return credentials.username == expected_user and credentials.password == expected_pass
+def _extract_jwt(request: Request) -> dict[str, Any] | None:
+    """Extract and validate a JWT from Authorization header or cookie."""
+    auth = request.headers.get("Authorization", "")
+    token = None
+    if auth.startswith("Bearer "):
+        token = auth[7:].strip()
+    if not token:
+        token = request.cookies.get("sentarr_token")
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
+        return {
+            "user_id": payload["sub"],
+            "username": payload["username"],
+            "role": payload["role"],
+        }
+    except (JWTError, KeyError):
+        return None
+
+
+def _verify_user(credentials: HTTPBasicCredentials) -> bool:
+    with Session(engine) as session:
+        user = session.exec(
+            select(User).where(User.username == credentials.username)
+        ).first()
+        if not user or not user.is_active:
+            return False
+        return User.verify_password(credentials.password, user.password_hash)
+
+
+def _get_user_role(username: str) -> str:
+    with Session(engine) as session:
+        user = session.exec(select(User).where(User.username == username)).first()
+        return user.role.value if user else "readonly"

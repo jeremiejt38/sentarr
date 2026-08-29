@@ -1,7 +1,7 @@
 services:
   sentarr:
     build:
-      context: ..
+      context: .
       dockerfile: docker/Dockerfile
     container_name: sentarr
     restart: unless-stopped
@@ -19,10 +19,13 @@ services:
       - RETRO_SCAN=${RETRO_SCAN:-true}
       - LIBRARIES_FILTER=${LIBRARIES_FILTER:-}
       - PLEX_PASS_ENABLED=${PLEX_PASS_ENABLED:-auto}
+      - AUTH_MODE=${AUTH_MODE:-none}
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - SENTARR_ADMIN_API_KEY=${SENTARR_ADMIN_API_KEY:-}
       - HOST=0.0.0.0
       - PORT=8000
     volumes:
-      - ${SENTARR_DATA:-../data}:/app/data
+      - ${SENTARR_DATA:-./data}:/app/data
       - ${PLEX_LOG_HOST_PATH:-/mnt/user/appdata/plex/Library/Application Support/Plex Media Server/Logs}:/var/log/plex:ro
     labels:
       - "traefik.enable=true"
@@ -39,7 +42,7 @@ services:
     networks:
       - plex-backend
     volumes:
-      - ./prometheus:/etc/prometheus:ro
+      - ./docker/prometheus:/etc/prometheus:ro
       - prometheus-data:/prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
@@ -52,8 +55,8 @@ services:
     networks:
       - plex-backend
     volumes:
-      - ./grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
       - grafana-data:/var/lib/grafana
     labels:
       - "traefik.enable=true"

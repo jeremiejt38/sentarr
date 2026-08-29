@@ -1,11 +1,14 @@
 const BASE_URL = import.meta.env.VITE_API_URL || '';
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token = localStorage.getItem('sentarr_token');
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(init.headers as Record<string, string> | undefined),
+  };
   const response = await fetch(`${BASE_URL}${path}`, {
-    headers: {
-      Accept: 'application/json',
-      ...init.headers,
-    },
+    headers,
     ...init,
   });
   if (!response.ok) {

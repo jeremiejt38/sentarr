@@ -2,10 +2,15 @@ import logging
 from typing import Any
 
 from plexapi.server import PlexServer
-from sqlalchemy.orm import Session
-from sqlmodel import select
+from sqlmodel import Session, select
 
 from sentarr.config import settings
+from sentarr.health.propagate import (
+    propagate_episode,
+    propagate_movie,
+    propagate_season,
+    propagate_show,
+)
 from sentarr.models.plex import (
     Episode,
     EpisodeTask,
@@ -93,7 +98,7 @@ def _ensure_server_configs(session: Session) -> list[PlexServerConfig]:
     configs: list[PlexServerConfig] = []
     for srv in server_defs:
         name = srv.get("name", "default")
-        existing = session.exec(  # type: ignore[attr-defined]
+        existing = session.exec(
             select(PlexServerConfig).where(PlexServerConfig.name == name)
         ).first()
         if existing:
@@ -190,7 +195,7 @@ def _sync_server_libraries(
         if settings.libraries_filter_list and section.title not in settings.libraries_filter_list:
             continue
 
-        existing = session.exec(  # type: ignore[attr-defined]
+        existing = session.exec(
             select(Library).where(
                 Library.plex_library_key == str(section.key),
                 Library.plex_server_id == plex_server_id,
@@ -217,13 +222,27 @@ def _sync_server_libraries(
         else:
             _sync_shows(session, existing or library, section)
 
+    _propagate_all(session)
+
+
+def _propagate_all(session: Session) -> None:
+    """Recalculate overall_status and progress for all tracked items."""
+    for movie in session.exec(select(Movie)).all():
+        propagate_movie(session, movie)
+    for show in session.exec(select(Show)).all():
+        propagate_show(session, show)
+    for season in session.exec(select(Season)).all():
+        propagate_season(session, season)
+    for episode in session.exec(select(Episode)).all():
+        propagate_episode(session, episode)
+
     session.commit()
 
 
 def _sync_movies(session: Session, library: Library, section: Any) -> None:
     videos: list[Any] = section.all()
     for video in videos:
-        existing = session.exec(  # type: ignore[attr-defined]
+        existing = session.exec(
             select(Movie).where(Movie.plex_rating_key == str(video.ratingKey))
         ).first()
         status = _task_status_from_video(video)
@@ -252,7 +271,7 @@ def _sync_movies(session: Session, library: Library, section: Any) -> None:
 def _sync_shows(session: Session, library: Library, section: Any) -> None:
     show_videos: list[Any] = section.all()
     for show_video in show_videos:
-        existing_show = session.exec(  # type: ignore[attr-defined]
+        existing_show = session.exec(
             select(Show).where(Show.plex_rating_key == str(show_video.ratingKey))
         ).first()
         if existing_show:
@@ -274,7 +293,7 @@ def _sync_shows(session: Session, library: Library, section: Any) -> None:
             _ensure_show_tasks(session, show)
 
         for season_video in show_video.seasons():
-            existing_season = session.exec(  # type: ignore[attr-defined]
+            existing_season = session.exec(
                 select(Season).where(Season.plex_rating_key == str(season_video.ratingKey))
             ).first()
             if existing_season:
@@ -292,7 +311,7 @@ def _sync_shows(session: Session, library: Library, section: Any) -> None:
                 _ensure_season_tasks(session, season)
 
             for episode_video in season_video.episodes():
-                existing_episode = session.exec(  # type: ignore[attr-defined]
+                existing_episode = session.exec(
                     select(Episode).where(Episode.plex_rating_key == str(episode_video.ratingKey))
                 ).first()
                 status = _task_status_from_video(episode_video)

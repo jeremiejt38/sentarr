@@ -272,6 +272,17 @@ class EpisodeTask(SQLModel, table=True):
     episode: Episode = Relationship(back_populates="tasks")
 
 
+class LogFileState(SQLModel, table=True):
+    """Tracks the byte offset of the last Plex log parse to enable real tail."""
+
+    __tablename__ = "log_file_states"
+
+    file_path: str = Field(primary_key=True)
+    last_offset: int = Field(default=0)
+    last_size: int = Field(default=0)
+    updated_at: datetime = Field(default_factory=now_utc)
+
+
 class LogEventRaw(SQLModel, table=True):
     __tablename__ = "log_events_raw"
     __table_args__ = (

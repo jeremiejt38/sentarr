@@ -1,8 +1,10 @@
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlmodel import Session
 
-from sentarr.collectors.download_sync import list_all_torrents
+from sentarr.collectors.download_sync import list_all_torrents, match_acquisition_to_torrents
+from sentarr.db import get_session
 
 router = APIRouter()
 
@@ -23,3 +25,11 @@ async def list_downloads() -> list[dict[str, Any]]:
         }
         for torrent in torrents
     ]
+
+
+@router.get("/acquisition")
+async def list_acquisition_torrents(
+    session: Session = Depends(get_session),
+) -> list[dict[str, Any]]:
+    """Return active acquisition items matched with their download-client torrent."""
+    return match_acquisition_to_torrents(session)

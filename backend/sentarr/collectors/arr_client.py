@@ -22,17 +22,14 @@ class ArrClient:
             timeout=httpx.Timeout(30.0),
         )
 
-    def _request(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
+    def _request(self, method: str, path: str, **kwargs: Any) -> Any:
         if method.upper() != "GET":
             raise ArrClientError(f"Only GET requests are allowed (got {method})")
         url = f"/api/v3{path}"
         try:
             response = self._client.get(url, **kwargs)
             response.raise_for_status()
-            data = response.json()
-            if not isinstance(data, dict):
-                raise ArrClientError(f"Unexpected response type from {self.name}")
-            return data
+            return response.json()
         except httpx.HTTPStatusError as exc:
             logger.error("%s %s returned %s", self.name, url, exc.response.status_code)
             raise ArrClientError(f"HTTP {exc.response.status_code} from {self.name}") from exc
@@ -40,14 +37,20 @@ class ArrClient:
             logger.error("Request to %s failed: %s", self.name, exc)
             raise ArrClientError(f"Request failed for {self.name}") from exc
 
-    def get_health(self) -> dict[str, Any]:
+    def get_health(self) -> Any:
         return self._request("GET", "/health")
 
-    def get_queue(self, page_size: int = 1000) -> dict[str, Any]:
+    def get_queue(self, page_size: int = 1000) -> Any:
         return self._request("GET", "/queue", params={"pageSize": page_size})
 
-    def get_history(self, page_size: int = 1000) -> dict[str, Any]:
+    def get_history(self, page_size: int = 1000) -> Any:
         return self._request("GET", "/history", params={"pageSize": page_size})
+
+    def get_quality_profiles(self) -> Any:
+        return self._request("GET", "/qualityProfile")
+
+    def get_root_folders(self) -> Any:
+        return self._request("GET", "/rootFolder")
 
     def close(self) -> None:
         self._client.close()
