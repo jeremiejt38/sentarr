@@ -1,0 +1,20 @@
+services:
+  sentarr-staging:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: sentarr-staging
+    restart: "no"
+    ports:
+      - "8001:8000"
+    env_file:
+      - .env.staging
+    volumes:
+      - ./data-staging:/app/data
+      - /mnt/docker/appdata/plex/Library/Application Support/Plex Media Server/Logs:/var/log/plex:ro
+    networks:
+      - plex-backend
+
+networks:
+  plex-backend:
+    external: true

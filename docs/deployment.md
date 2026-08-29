@@ -66,7 +66,39 @@ docker build -t sentarr:latest -f docker/Dockerfile .
 Ou en mode développement :
 
 ```bash
+docker compose -f docker-compose.yml up --build -d
+# ou
 docker compose -f docker/docker-compose.dev.yml up --build
+```
+
+## Test cible sur une bibliotheque (staging)
+
+Avant de scanner l'ensemble de Plex, on peut lancer Sentarr sur **une seule bibliotheque**
+avec une base de donnees isolee, sans toucher au container Plex.
+
+1. Creer le fichier de configuration staging :
+
+```bash
+cp .env.staging.example .env.staging
+```
+
+2. Remplir au minimum :
+   - `PLEX_TOKEN` (Plex Web > Settings > General > Advanced > Show Token)
+   - `LIBRARIES_FILTER` (nom exact de la bibliotheque a tester)
+   - `PLEX_LOG_PATH` (si le chemin des logs est different)
+
+3. Lancer le test :
+
+```bash
+./scripts/test-library.sh
+```
+
+4. Ouvrir `http://<ip_unraid>:8001` et observer le scan.
+
+5. Arreter proprement quand le test est termine :
+
+```bash
+docker compose -f docker-compose.staging.yml down
 ```
 
 ## Dockerfile (V1, backend + frontend)
