@@ -37,6 +37,7 @@ Thumbs.db
 
 # Application
 data/
+.env.staging
 *.db
 *.sqlite
 *.sqlite3

@@ -124,16 +124,21 @@ def _bootstrap_admin_api_key() -> None:
 
 @app.on_event("startup")
 async def startup() -> None:
-    logger.info("Running database migrations...")
-    run_migrations()
-    logger.info("Database migrations completed.")
-    _bootstrap_admin_api_key()
-    # Plugin system
-    discovered = plugin_manager.discover()
-    if discovered:
-        logger.info("Discovered %d plugin(s): %s", len(discovered), ", ".join(discovered))
-    plugin_manager.activate_all(app)
-    start_scheduler()
+    try:
+        logger.info("Running database migrations...")
+        run_migrations()
+        logger.info("Database migrations completed.")
+        _bootstrap_admin_api_key()
+        # Plugin system
+        discovered = plugin_manager.discover()
+        if discovered:
+            logger.info("Discovered %d plugin(s): %s", len(discovered), ", ".join(discovered))
+        plugin_manager.activate_all(app)
+        start_scheduler()
+        logger.info("Startup complete.")
+    except Exception:
+        logger.exception("Startup failed")
+        raise
 
 
 @app.exception_handler(Exception)
