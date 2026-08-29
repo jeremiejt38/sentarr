@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { api } from './lib/api.client';
 import { Layout } from './pages/Layout';
 import { LoginPage } from './pages/LoginPage';
 import { SummaryPage } from './pages/SummaryPage';
@@ -16,14 +18,25 @@ import './styles/theme.css';
 import './app.css';
 
 function App() {
+  const [authRequired, setAuthRequired] = useState<boolean | null>(null);
   const isLoggedIn = Boolean(localStorage.getItem('sentarr_token'));
+
+  useEffect(() => {
+    api.get<{ required: boolean }>('/api/v1/auth/config')
+      .then(({ required }) => setAuthRequired(required))
+      .catch(() => setAuthRequired(true));
+  }, []);
+
+  if (authRequired === null) return null;
+
+  const hasAccess = !authRequired || isLoggedIn;
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login" element={authRequired ? <LoginPage /> : <Navigate to="/" replace />} />
         <Route
           path="/"
-          element={isLoggedIn ? <Layout /> : <Navigate to="/login" replace />}
+          element={hasAccess ? <Layout /> : <Navigate to="/login" replace />}
         >
           <Route index element={<SummaryPage />} />
           <Route path="movies" element={<MoviesPage />} />

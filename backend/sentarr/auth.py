@@ -25,6 +25,7 @@ PUBLIC_PATHS = frozenset(
         "/docs",
         "/openapi.json",
         "/api/v1/users/login",
+        "/api/v1/auth/config",
     }
 )
 

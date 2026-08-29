@@ -4,10 +4,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
+from sentarr.config import settings
 from sentarr.db import get_session
 from sentarr.models.auth import ApiKey, ApiKeyRole
 
 router = APIRouter()
+
+
+@router.get("/config")
+async def auth_config() -> dict[str, bool]:
+    return {"required": settings.auth_mode != "none"}
 
 
 class ApiKeyCreate(BaseModel):
