@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../lib/api.client';
+import { useRefreshOnWebSocket } from '../lib/websocket';
 
 interface SummaryData {
   total_movies: number;
@@ -24,7 +25,7 @@ export function SummaryPage() {
   const [health, setHealth] = useState<HealthData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     api
       .get<SummaryData>('/api/v1/summary')
       .then(setData)
@@ -34,6 +35,12 @@ export function SummaryPage() {
       .then(setHealth)
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useRefreshOnWebSocket(load);
 
   if (error) return <div className="error">{error}</div>;
   if (!data) return <div className="loading">Chargement...</div>;

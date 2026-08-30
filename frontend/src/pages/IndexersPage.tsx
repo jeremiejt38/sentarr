@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../lib/api.client';
+import { useRefreshOnWebSocket } from '../lib/websocket';
 
 interface Indexer {
   id: number;
@@ -28,7 +29,7 @@ export function IndexersPage() {
   const [stats, setStats] = useState<IndexerStats[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     api
       .get<{ items: Indexer[] }>('/api/v1/indexers')
       .then((d) => setIndexers(d.items))
@@ -38,6 +39,12 @@ export function IndexersPage() {
       .then((d) => setStats(d.sources))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useRefreshOnWebSocket(load);
 
   if (error) return <div className="error">{error}</div>;
 

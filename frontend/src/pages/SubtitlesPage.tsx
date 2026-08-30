@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../lib/api.client';
+import { useRefreshOnWebSocket } from '../lib/websocket';
 
 interface SubtitleTrack {
   id: number;
@@ -17,12 +18,18 @@ export function SubtitlesPage() {
   const [tracks, setTracks] = useState<SubtitleTrack[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     api
       .get<{ items: SubtitleTrack[] }>('/api/v1/subtitles')
       .then((d) => setTracks(d.items))
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useRefreshOnWebSocket(load);
 
   if (error) return <div className="error">{error}</div>;
 

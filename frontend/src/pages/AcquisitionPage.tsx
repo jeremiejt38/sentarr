@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api.client';
+import { useRefreshOnWebSocket } from '../lib/websocket';
 import { StatusBadge } from '../components/StatusBadge/StatusBadge';
 import { ProgressBar } from '../components/ProgressBar/ProgressBar';
 import { Timeline } from '../components/Timeline/Timeline';
@@ -54,12 +55,18 @@ export function AcquisitionPage() {
   const [selectedItem, setSelectedItem] = useState<AcquisitionItem | null>(null);
   const [pipeline, setPipeline] = useState<UnifiedPipeline | null>(null);
 
-  useEffect(() => {
+  const loadItems = useCallback(() => {
     api
       .get<AcquisitionItem[]>('/api/v1/acquisition')
       .then(setItems)
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
   }, []);
+
+  useEffect(() => {
+    loadItems();
+  }, [loadItems]);
+
+  useRefreshOnWebSocket(loadItems);
 
   useEffect(() => {
     api

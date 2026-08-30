@@ -1,11 +1,14 @@
 import { Link, Outlet } from 'react-router-dom';
-import { useWebSocket } from '../lib/websocket';
+import { REFRESH_EVENT, useWebSocket } from '../lib/websocket';
 import './layout.css';
 
 export function Layout() {
   const { connected } = useWebSocket((message) => {
-    // eslint-disable-next-line no-console
-    console.debug('WS message:', message);
+    window.dispatchEvent(
+      new CustomEvent(REFRESH_EVENT, {
+        detail: message,
+      })
+    );
   });
 
   return (

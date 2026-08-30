@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api.client';
+import { useRefreshOnWebSocket } from '../lib/websocket';
 import { StatusBadge } from '../components/StatusBadge/StatusBadge';
 import { ProgressBar } from '../components/ProgressBar/ProgressBar';
 
@@ -20,12 +21,18 @@ export function DownloadPage() {
   const [torrents, setTorrents] = useState<Torrent[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     api
       .get<Torrent[]>('/api/v1/download')
       .then(setTorrents)
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useRefreshOnWebSocket(load);
 
   const filtered = useMemo(() => {
     return torrents.sort((a, b) => b.progress - a.progress);
