@@ -97,6 +97,7 @@ def start_scheduler() -> AsyncIOScheduler:
         seconds=settings.poll_interval_seconds,
         id="plex_sync",
         replace_existing=True,
+        max_instances=1,
         args=(sync_plex_job,),
     )
     scheduler.add_job(
@@ -105,6 +106,7 @@ def start_scheduler() -> AsyncIOScheduler:
         seconds=settings.poll_interval_seconds,
         id="plex_log_parse",
         replace_existing=True,
+        max_instances=1,
         args=(parse_plex_logs_job,),
     )
     scheduler.add_job(
@@ -113,6 +115,7 @@ def start_scheduler() -> AsyncIOScheduler:
         seconds=settings.arr_poll_interval_seconds,
         id="arr_sync",
         replace_existing=True,
+        max_instances=1,
         args=(sync_arr_job,),
     )
     scheduler.add_job(
@@ -121,6 +124,7 @@ def start_scheduler() -> AsyncIOScheduler:
         seconds=settings.arr_poll_interval_seconds,
         id="alert_engine",
         replace_existing=True,
+        max_instances=1,
         args=(evaluate_alerts_job,),
     )
     scheduler.add_job(
@@ -129,6 +133,7 @@ def start_scheduler() -> AsyncIOScheduler:
         seconds=settings.poll_interval_seconds,
         id="bazarr_sync",
         replace_existing=True,
+        max_instances=1,
         args=(sync_bazarr_job,),
     )
     scheduler.add_job(
@@ -137,6 +142,7 @@ def start_scheduler() -> AsyncIOScheduler:
         minutes=60,
         id="analytics_snapshot",
         replace_existing=True,
+        max_instances=1,
         args=(analytics_snapshot_job,),
     )
     scheduler.start()
