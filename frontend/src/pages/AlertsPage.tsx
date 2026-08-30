@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api.client';
+import { useRefreshOnWebSocket } from '../lib/websocket';
 
 interface Alert {
   id: number;
@@ -19,7 +20,7 @@ export function AlertsPage() {
   const [severity, setSeverity] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const load = () => {
+  const load = useCallback(() => {
     const params = new URLSearchParams();
     params.set('resolved', String(resolved));
     if (severity) params.set('severity', severity);
@@ -27,12 +28,13 @@ export function AlertsPage() {
       .get<{ items: Alert[] }>(`/api/v1/alerts?${params.toString()}`)
       .then((data) => setAlerts(data.items))
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
-  };
+  }, [resolved, severity]);
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resolved, severity]);
+  }, [load]);
+
+  useRefreshOnWebSocket(load);
 
   const resolve = async (id: number) => {
     await api.post(`/api/v1/alerts/${id}/resolve`, {});

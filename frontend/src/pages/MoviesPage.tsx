@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api.client';
+import { useRefreshOnWebSocket } from '../lib/websocket';
 import { ProgressBar } from '../components/ProgressBar/ProgressBar';
 import { StatusBadge } from '../components/StatusBadge/StatusBadge';
 
@@ -19,7 +20,7 @@ export function MoviesPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     const params = new URLSearchParams();
     if (query) params.set('q', query);
     if (statusFilter) params.set('status', statusFilter);
@@ -28,6 +29,12 @@ export function MoviesPage() {
       .then(setMovies)
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
   }, [query, statusFilter]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useRefreshOnWebSocket(load);
 
   const statuses = useMemo(
     () => ['pending', 'in_progress', 'completed', 'error', 'not_applicable'],

@@ -13,7 +13,7 @@
 | 3 | Parseur de logs | **PARTIAL** | `plex_log_parser.py` complet (regex, dedup, correlation). **Manque** : `plex_log_tail.py` est un alias, pas un vrai tail temps reel (re-parse l'ensemble a chaque intervalle). |
 | 4 | Moteur de correlation | **PARTIAL** | Correlation par ratingKey/path OK, _update_task OK. **Manque** : aggregation persistee de `overall_status`/`progress_percent` des parents (Season/Show) depuis les enfants. Le calcul existe en memoire (`health/score.py`) mais n'est pas ecrit en base. |
 | 5 | API backend | DONE | Routers movies, shows, search, summary, websocket tous wires dans main.py. |
-| 6 | Frontend | DONE | SummaryPage, MoviesPage, ShowsPage, AcquisitionPage, SettingsPage, Timeline. **Note** : WebSocket affiche un indicateur de connexion mais ne rafraichit pas les donnees live. |
+| 6 | Frontend | DONE | SummaryPage, MoviesPage, ShowsPage, AcquisitionPage, SettingsPage, Timeline. WebSocket rafraichit automatiquement les pages de donnees via un evenement global. |
 | 7 | Gestion erreurs | DONE | `health/anomalies.py` (doublons + mal identifies), mode degrade Plex, SQLAlchemyJobStore. |
 | 8 | Packaging final | **PARTIAL** | Dockerfile multi-stage, docker-compose, .env.example, docs/deployment.md. **Manque** : pas de docker-compose.yml racine, pas de fichier Traefik dedie, reference a `docker-compose.dev.yml` inexistant dans deployment.md. |
 | 9 | Validation | **PARTIAL** | CI GitHub Actions, 96 tests backend. **Manque** : deploiement reel sur Unraid non fait, tests frontend limites. |

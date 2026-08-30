@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 
 const WS_URL = import.meta.env.VITE_WS_URL || `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`;
 
+export const REFRESH_EVENT = 'sentarr:refresh';
+
 export function useWebSocket<T = unknown>(onMessage?: (message: T) => void) {
   const [connected, setConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
@@ -45,4 +47,12 @@ export function useWebSocket<T = unknown>(onMessage?: (message: T) => void) {
   }, [onMessage]);
 
   return { connected, send: wsRef.current?.send.bind(wsRef.current) };
+}
+
+export function useRefreshOnWebSocket(callback: () => void) {
+  useEffect(() => {
+    const handler = () => callback();
+    window.addEventListener(REFRESH_EVENT, handler);
+    return () => window.removeEventListener(REFRESH_EVENT, handler);
+  }, [callback]);
 }
