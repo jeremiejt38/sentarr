@@ -16,8 +16,16 @@ def normalize_movie(raw: dict[str, Any], source_id: int) -> dict[str, Any]:
         "status": _status_from_movie(raw),
         "quality_profile": raw.get("qualityProfileId"),
         "root_folder": raw.get("rootFolderPath"),
+        "download_id": _download_id(raw),
         "raw_data": raw,
     }
+
+
+def _download_id(raw: dict[str, Any]) -> str | None:
+    download_id = raw.get("downloadId")
+    if isinstance(download_id, str) and download_id:
+        return download_id.upper()
+    return None
 
 
 def _status_from_movie(raw: dict[str, Any]) -> str:

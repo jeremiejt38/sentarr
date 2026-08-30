@@ -16,6 +16,7 @@ def normalize_series(raw: dict[str, Any], source_id: int) -> dict[str, Any]:
         "status": _status_from_series(raw),
         "quality_profile": raw.get("qualityProfileId"),
         "root_folder": raw.get("rootFolderPath"),
+        "download_id": _download_id(raw),
         "raw_data": raw,
     }
 
@@ -30,8 +31,16 @@ def normalize_episode(raw: dict[str, Any], source_id: int, series_id: int) -> di
         "status": _status_from_episode(raw),
         "quality_profile": None,
         "root_folder": None,
+        "download_id": _download_id(raw),
         "raw_data": raw,
     }
+
+
+def _download_id(raw: dict[str, Any]) -> str | None:
+    download_id = raw.get("downloadId")
+    if isinstance(download_id, str) and download_id:
+        return download_id.upper()
+    return None
 
 
 def _status_from_series(raw: dict[str, Any]) -> str:

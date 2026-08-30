@@ -31,7 +31,7 @@
 | 2 | Modeles et persistance | DONE | ArrInstance, AcquisitionItem, AcquisitionEvent, Alert, QualityProfile, RootFolder + migrations Alembic. |
 | 3 | Sync queue + history | DONE | `arr_sync.py` lit queue + history, dedup sur (source_id, external_id). |
 | 4 | Correlation acq-plex | DONE | `_correlate_unmatched` par path normalise, delai import-to-detect dans `/api/v1/health/delays`. |
-| 5 | Download clients | **PARTIAL** | qBittorrent + Transmission + abstraction OK. **Manque** : pas de liaison entre les torrents actifs et les items *arr (progress_percent non affine depuis le download client). |
+| 5 | Download clients | DONE | qBittorrent + Transmission + abstraction OK. Liaison par `download_id` (hash du torrent) ou fallback titre ; `download_progress` synchronise dans `acquisition_items` a chaque sync *arr et affiche dans le frontend. |
 | 6 | Score de sante | DONE | `health/score.py` calcul 0-100 par item + global, seuils configurables, affiche dans les listes et le health endpoint. |
 | 7 | Alertes | **PARTIAL** | Moteur `alerts/engine.py` + API OK. **Manque** : les regles referent des statuts `searched`/`importing` que le modele d'acquisition ne produit jamais ; webhook V2 generique non implemente (remplace par Apprise V3). |
 | 8 | Frontend Acquisition | DONE | AcquisitionPage avec pipeline unifie 16 etapes, delai import-to-detect. |
@@ -90,6 +90,5 @@
 
 ### Priorite basse (polish)
 
-8. **V2-P5 : Liaison download clients <-> acq** — Mapper les torrents actifs aux items *arr pour affiner progress_percent.
-9. **V1-P9 / V3-P9 : Validation reelle** — Deployer sur Unraid et tester avec la bibliotheque complete.
-10. **Tests frontend** — Ajouter des tests pour les pages principales (SummaryPage, MoviesPage, ShowsPage).
+8. **V1-P9 / V3-P9 : Validation reelle** — Deployer sur Unraid et tester avec la bibliotheque complete.
+9. **Tests frontend** — Ajouter des tests pour les pages principales (SummaryPage, MoviesPage, ShowsPage).

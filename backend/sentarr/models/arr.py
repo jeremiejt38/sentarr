@@ -139,6 +139,8 @@ class AcquisitionItem(SQLModel, table=True):
     status: str = "unknown"
     quality_profile: str | None = None
     root_folder: str | None = None
+    download_id: str | None = Field(default=None, index=True, nullable=True)
+    download_progress: int | None = Field(default=None, nullable=True)
     raw_data: str | None = None
     correlated_to_type: str | None = None  # movie | episode | show
     correlated_to_id: int | None = None
