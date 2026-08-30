@@ -6,6 +6,7 @@ from typing import Any, cast
 from sqlmodel import Session, select
 
 from sentarr.collectors.arr_client import ArrClient
+from sentarr.collectors.download_sync import update_download_progress
 from sentarr.collectors.radarr import make_radarr_client, normalize_movie
 from sentarr.collectors.sonarr import make_sonarr_client, normalize_series
 from sentarr.config import settings
@@ -90,6 +91,7 @@ def sync_acquisition(session: Session) -> None:
             logger.exception("Failed to sync %s", instance.name)
 
     _correlate_unmatched(session)
+    update_download_progress(session)
     session.commit()
 
 
@@ -225,6 +227,10 @@ def _sync_instance(session: Session, instance: ArrInstance, client: ArrClient) -
 
         if existing:
             existing.status = _merge_status(existing.status, normalized["status"])
+            if normalized.get("download_id"):
+                existing.download_id = normalized["download_id"]
+            if existing.status != "downloading":
+                existing.download_progress = None
             existing.updated_at = now_utc()
             session.add(existing)
             item = existing
@@ -240,6 +246,8 @@ def _sync_instance(session: Session, instance: ArrInstance, client: ArrClient) -
                 if normalized.get("quality_profile")
                 else None,
                 root_folder=normalized.get("root_folder"),
+                download_id=normalized.get("download_id"),
+                download_progress=None,
                 raw_data=json.dumps(record),
             )
             session.add(item)

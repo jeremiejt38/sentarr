@@ -60,43 +60,87 @@ def list_all_torrents() -> list[TorrentInfo]:
     return torrents
 
 
-def _normalize(text: str | None) -> str:
+def _normalize(text: str | None) -> list[str]:
     if not text:
-        return ""
-    text = text.lower()
-    text = re.sub(r"[^a-z0-9 ]", "", text)
-    return " ".join(text.split())
+        return []
+    return [word for word in re.split(r"[^a-z0-9]+", text.lower()) if word]
 
 
-def match_acquisition_to_torrents(session: Session) -> list[dict[str, Any]]:
-    """Match active acquisition items to current torrents by title/name."""
+def _torrents_by_hash(torrents: list[TorrentInfo]) -> dict[str, TorrentInfo]:
+    by_hash: dict[str, TorrentInfo] = {}
+    for torrent in torrents:
+        by_hash[torrent.hash.upper()] = torrent
+    return by_hash
+
+
+def _match_item_to_torrent(
+    item: AcquisitionItem, torrents: list[TorrentInfo], by_hash: dict[str, TorrentInfo]
+) -> TorrentInfo | None:
+    if item.download_id:
+        by_id = by_hash.get(item.download_id.upper())
+        if by_id:
+            return by_id
+
+    title_tokens = _normalize(item.title)
+    if not title_tokens:
+        return None
+    for torrent in torrents:
+        t_tokens = _normalize(torrent.name)
+        if all(token in t_tokens for token in title_tokens):
+            return torrent
+    return None
+
+
+def _build_match(item: AcquisitionItem, torrent: TorrentInfo) -> dict[str, Any]:
+    return {
+        "acquisition_item_id": item.id,
+        "title": item.title,
+        "torrent_name": torrent.name,
+        "hash": torrent.hash,
+        "progress_percent": round(torrent.progress * 100, 2),
+        "status": torrent.status,
+        "download_speed": torrent.download_speed,
+        "eta_seconds": torrent.eta_seconds,
+        "save_path": torrent.save_path,
+        "client": torrent.name,
+    }
+
+
+def update_download_progress(session: Session) -> list[dict[str, Any]]:
+    """Update download_progress on active acquisition items from current torrents."""
     items = session.exec(
         select(AcquisitionItem).where(AcquisitionItem.status == "downloading")
     ).all()
     torrents = list_all_torrents()
+    by_hash = _torrents_by_hash(torrents)
     matches: list[dict[str, Any]] = []
 
     for item in items:
-        title = _normalize(item.title)
-        if not title:
-            continue
-        for torrent in torrents:
-            t_name = _normalize(torrent.name)
-            if title in t_name or t_name in title:
-                matches.append(
-                    {
-                        "acquisition_item_id": item.id,
-                        "title": item.title,
-                        "torrent_name": torrent.name,
-                        "hash": torrent.hash,
-                        "progress_percent": round(torrent.progress * 100, 2),
-                        "status": torrent.status,
-                        "download_speed": torrent.download_speed,
-                        "eta_seconds": torrent.eta_seconds,
-                        "save_path": torrent.save_path,
-                        "client": torrent.name,
-                    }
-                )
-                break
+        torrent = _match_item_to_torrent(item, torrents, by_hash)
+        if torrent:
+            progress = round(torrent.progress * 100, 2)
+            item.download_progress = int(progress)
+            matches.append(_build_match(item, torrent))
+        else:
+            item.download_progress = None
+        session.add(item)
+
+    session.commit()
+    return matches
+
+
+def match_acquisition_to_torrents(session: Session) -> list[dict[str, Any]]:
+    """Return active acquisition items matched with their download-client torrent."""
+    items = session.exec(
+        select(AcquisitionItem).where(AcquisitionItem.status == "downloading")
+    ).all()
+    torrents = list_all_torrents()
+    by_hash = _torrents_by_hash(torrents)
+    matches: list[dict[str, Any]] = []
+
+    for item in items:
+        torrent = _match_item_to_torrent(item, torrents, by_hash)
+        if torrent:
+            matches.append(_build_match(item, torrent))
 
     return matches

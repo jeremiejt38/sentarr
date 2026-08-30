@@ -34,6 +34,8 @@ async def list_acquisition_items(
             "status": item.status,
             "client_type": item.client_type.value,
             "source_id": item.source_id,
+            "download_id": item.download_id,
+            "download_progress": item.download_progress,
             "correlated_to_type": item.correlated_to_type,
             "correlated_to_id": item.correlated_to_id,
             "updated_at": item.updated_at,

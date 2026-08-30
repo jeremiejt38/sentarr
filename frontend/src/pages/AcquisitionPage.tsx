@@ -13,6 +13,8 @@ interface AcquisitionItem {
   status: string;
   client_type: string;
   source_id: number;
+  download_id: string | null;
+  download_progress: number | null;
   correlated_to_type: string | null;
   correlated_to_id: number | null;
   updated_at: string;
@@ -150,7 +152,7 @@ export function AcquisitionPage() {
                 <StatusBadge status={item.status as never} />
               </td>
               <td>
-                <ProgressBar value={STATUS_PROGRESS[item.status] ?? 0} />
+                <ProgressBar value={item.download_progress ?? STATUS_PROGRESS[item.status] ?? 0} />
               </td>
             </tr>
           ))}
