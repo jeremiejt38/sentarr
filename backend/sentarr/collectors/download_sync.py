@@ -2,7 +2,9 @@ import json
 import logging
 import os
 import re
-from typing import Any
+import threading
+import time
+from typing import Any, ClassVar
 
 from sqlmodel import Session, select
 
@@ -13,6 +15,39 @@ from sentarr.config import settings
 from sentarr.models.arr import AcquisitionItem
 
 logger = logging.getLogger(__name__)
+
+_TORRENT_CACHE_TTL_SECONDS = 10.0
+
+
+class _TorrentCache:
+    """Simple TTL cache for download-client torrent listings."""
+
+    _lock: ClassVar[threading.Lock] = threading.Lock()
+    _data: ClassVar[list[TorrentInfo] | None] = None
+    _ts: ClassVar[float] = 0.0
+
+    @classmethod
+    def get(cls) -> list[TorrentInfo] | None:
+        with cls._lock:
+            if cls._data is None:
+                return None
+            if time.monotonic() - cls._ts > _TORRENT_CACHE_TTL_SECONDS:
+                cls._data = None
+                cls._ts = 0
+                return None
+            return cls._data
+
+    @classmethod
+    def set(cls, data: list[TorrentInfo]) -> None:
+        with cls._lock:
+            cls._data = data
+            cls._ts = time.monotonic()
+
+    @classmethod
+    def invalidate(cls) -> None:
+        with cls._lock:
+            cls._data = None
+            cls._ts = 0
 
 
 def _resolve_password(password_env: str | None) -> str:
@@ -49,6 +84,10 @@ def get_download_clients() -> list[DownloadClient]:
 
 
 def list_all_torrents() -> list[TorrentInfo]:
+    cached = _TorrentCache.get()
+    if cached is not None:
+        return cached
+
     torrents: list[TorrentInfo] = []
     for client in get_download_clients():
         try:
@@ -57,6 +96,7 @@ def list_all_torrents() -> list[TorrentInfo]:
                     torrents.append(torrent)
         except Exception:
             logger.exception("Failed to list torrents from %s", client.name())
+    _TorrentCache.set(torrents)
     return torrents
 
 
