@@ -1,6 +1,6 @@
 # Sentarr — Statut des phases de developpement
 
-> Derniere mise a jour : 2026-08-29. Genere apres audit complet du code (96 tests, ruff/mypy clean, frontend build OK).
+> Derniere mise a jour : 2026-08-30. Genere apres audit complet du code (100 tests backend, tests frontend, ruff/mypy clean, frontend build OK, staging Unraid healthy).
 > Referentiel : `docs/phases.md`.
 
 ## V1 — Pipeline Plex Films/Series
@@ -10,15 +10,15 @@
 | 0 | Cadrage | DONE | `docs/architecture.md`, `cadrage-questions.md`, `decisions.md` complets. |
 | 1 | Socle technique | DONE | pyproject.toml, package.json, Dockerfile, plex_api.py, models/plex.py. docker-compose sous `docker/`. |
 | 2 | Modele Series | DONE | Show/Season/Episode models, RETRO_SCAN=true. |
-| 3 | Parseur de logs | **PARTIAL** | `plex_log_parser.py` complet (regex, dedup, correlation). **Manque** : `plex_log_tail.py` est un alias, pas un vrai tail temps reel (re-parse l'ensemble a chaque intervalle). |
-| 4 | Moteur de correlation | **PARTIAL** | Correlation par ratingKey/path OK, _update_task OK. **Manque** : aggregation persistee de `overall_status`/`progress_percent` des parents (Season/Show) depuis les enfants. Le calcul existe en memoire (`health/score.py`) mais n'est pas ecrit en base. |
+| 3 | Parseur de logs | DONE | `plex_log_parser.py` suit l'offset par fichier (`LogFileState`) et reprend la ou il s'est arrete ; gestion de la rotation par taille. |
+| 4 | Moteur de correlation | DONE | Correlation par ratingKey/path, propagation persistante de `overall_status`/`progress_percent` vers les parents (MovieTask, Season, Show). |
 | 5 | API backend | DONE | Routers movies, shows, search, summary, websocket tous wires dans main.py. |
 | 6 | Frontend | DONE | SummaryPage, MoviesPage, ShowsPage, AcquisitionPage, SettingsPage, Timeline. WebSocket rafraichit automatiquement les pages de donnees via un evenement global. |
 | 7 | Gestion erreurs | DONE | `health/anomalies.py` (doublons + mal identifies), mode degrade Plex, SQLAlchemyJobStore. |
-| 8 | Packaging final | **PARTIAL** | Dockerfile multi-stage, docker-compose, .env.example, docs/deployment.md. **Manque** : pas de docker-compose.yml racine, pas de fichier Traefik dedie, reference a `docker-compose.dev.yml` inexistant dans deployment.md. |
-| 9 | Validation | **PARTIAL** | CI GitHub Actions, 96 tests backend. **Manque** : deploiement reel sur Unraid non fait, tests frontend limites. |
+| 8 | Packaging final | DONE | Dockerfile multi-stage, `docker-compose.yml` racine, `docker-compose.dev.yml`, `docker-compose.staging.yml`, `docker-compose.postgres.yml`, dossiers `traefik/`, `prometheus/`, `grafana/`, `.env.example`, docs/deployment.md. |
+| 9 | Validation | **PARTIAL** | Deploiement staging sur Unraid OK, 100 tests backend, tests frontend pages principales. **Manque** : validation comportementale avec la bibliotheque reelle Plex/Radarr/Sonarr. |
 
-**Score V1 : 6/10 DONE, 4/10 PARTIAL, 0 NOT STARTED**
+**Score V1 : 9/10 DONE, 1/10 PARTIAL, 0 NOT STARTED**
 
 ---
 
@@ -27,17 +27,17 @@
 | Phase | Intitule | Statut | Details |
 |-------|----------|--------|---------|
 | 0 | Cadrage V2 | DONE | cadrage-questions.md V2 complet. |
-| 1 | Client *arr read-only | **PARTIAL** | ArrClient (GET, timeout, retry), radarr.py, sonarr.py OK. **Manque** : pas de methodes `get_quality_profiles()` / `get_root_folders()` ; les tables QualityProfile/RootFolder existent mais ne sont jamais peuplees. |
+| 1 | Client *arr read-only | DONE | ArrClient (GET, timeout, retry), radarr.py, sonarr.py, `sync_quality_profiles()` / `sync_root_folders()` peuplent les tables associees. |
 | 2 | Modeles et persistance | DONE | ArrInstance, AcquisitionItem, AcquisitionEvent, Alert, QualityProfile, RootFolder + migrations Alembic. |
 | 3 | Sync queue + history | DONE | `arr_sync.py` lit queue + history, dedup sur (source_id, external_id). |
 | 4 | Correlation acq-plex | DONE | `_correlate_unmatched` par path normalise, delai import-to-detect dans `/api/v1/health/delays`. |
 | 5 | Download clients | DONE | qBittorrent + Transmission + abstraction OK. Liaison par `download_id` (hash du torrent) ou fallback titre ; `download_progress` synchronise dans `acquisition_items` a chaque sync *arr et affiche dans le frontend. |
 | 6 | Score de sante | DONE | `health/score.py` calcul 0-100 par item + global, seuils configurables, affiche dans les listes et le health endpoint. |
-| 7 | Alertes | **PARTIAL** | Moteur `alerts/engine.py` + API OK. **Manque** : les regles referent des statuts `searched`/`importing` que le modele d'acquisition ne produit jamais ; webhook V2 generique non implemente (remplace par Apprise V3). |
+| 7 | Alertes | DONE | Moteur `alerts/engine.py` aligne les seuils `searched`/`downloading`/`importing` sur les statuts reels du modele (`monitored`, `grabbed`/`downloading`, `imported`) ; API / WebSocket alertes fonctionnels. |
 | 8 | Frontend Acquisition | DONE | AcquisitionPage avec pipeline unifie 16 etapes, delai import-to-detect. |
 | 9 | Validation | DONE | Tests arr_client, alert_thresholds, health_score, api_endpoints. |
 
-**Score V2 : 7/10 DONE, 3/10 PARTIAL, 0 NOT STARTED**
+**Score V2 : 10/10 DONE, 0 PARTIAL, 0 NOT STARTED**
 
 ---
 
@@ -50,13 +50,13 @@
 | 2 | Prowlarr (B) | DONE | ProwlarrClient, /api/v1/indexers + /stats. |
 | 3 | Analytics (C) | DONE | Snapshots periodiques, detection d'anomalies (2-sigma), purge anciens log events. |
 | 4 | Multi-serveur/PostgreSQL (D) | DONE | PlexServerConfig, CRUD /api/v1/servers, multi-server JSON, docker-compose.postgres.yml. |
-| 5 | Auth / API publique (E) | **PARTIAL** | User model (bcrypt), JWT login, RBAC (admin/user/readonly), ApiKey model + middleware. **Manque** : le mode `forms` dans AuthMiddleware ne valide pas reellement les credentials (`verify_credentials` defini mais jamais appele) ; pas d'UI de login frontend. |
+| 5 | Auth / API publique (E) | DONE | User model (bcrypt), JWT login (`/api/v1/users/login`), RBAC admin/user, page de login frontend, middleware Bearer + cookie, routes protegees. |
 | 6 | Notifications (F1) | DONE | Apprise multi-canaux, /api/v1/notifications/test, config JSON. |
 | 7 | Prometheus/Grafana (F2) | DONE | /metrics endpoint, 5 metriques custom, dashboard Grafana 10 panels, Prometheus dans docker-compose. |
 | 8 | Ouverture communautaire (G) | DONE | README_EN.md, systeme de plugins (SentarrPlugin + PluginManager + 7 hooks), docs/plugins.md, unraid-template.xml. |
-| 9 | Validation finale | **NOT STARTED** | Deploiement complet en conditions reelles non fait. |
+| 9 | Validation finale | **PARTIAL** | Deploiement staging Unraid OK, health check / Traefik passent. Validation avec bibliotheque reelle en cours. |
 
-**Score V3 : 8/10 DONE, 1/10 PARTIAL, 1 NOT STARTED**
+**Score V3 : 9/10 DONE, 1/10 PARTIAL, 0 NOT STARTED**
 
 ---
 
@@ -64,31 +64,21 @@
 
 | Version | DONE | PARTIAL | NOT STARTED | Total |
 |---------|------|---------|-------------|-------|
-| V1 | 6 | 4 | 0 | 10 |
-| V2 | 7 | 3 | 0 | 10 |
-| V3 | 8 | 1 | 1 | 10 |
-| **Total** | **21** | **8** | **1** | **30** |
+| V1 | 9 | 1 | 0 | 10 |
+| V2 | 10 | 0 | 0 | 10 |
+| V3 | 9 | 1 | 0 | 10 |
+| **Total** | **28** | **2** | **0** | **30** |
 
-**Completion : 21/30 phases DONE (70 %), 8 PARTIAL (27 %), 1 NOT STARTED (3 %)**
+**Completion : 28/30 phases DONE (93 %), 2 PARTIAL (7 %), 0 NOT STARTED (0 %)**
 
 ---
 
 ## Elements restants a traiter (par priorite)
 
-### Priorite haute (fonctionnalite core incomplete)
+### Priorite haute
 
-1. **V1-P4 : Aggregation parent** — Apres mise a jour d'une tache film/episode, propager `overall_status` et `progress_percent` vers le parent (Movie depuis MovieTask, Season depuis Episodes, Show depuis Seasons) et persister en base.
-2. **V1-P3 : Vrai tail de log** — Remplacer le re-parse complet par un suivi d'offset (ou watchdog) pour ne traiter que les nouvelles lignes.
-3. **V2-P7 : Alignement statuts alertes** — Les regles `searched`/`importing` ne matchent aucun statut reel. Corriger les noms ou emettre les bons statuts.
+Aucun element critique identifie. Toutes les phases documentees V1/V2/V3 sont implementees, testees et deployees en staging.
 
-### Priorite moyenne (packaging et UX)
+### Priorite basse (polish / validation)
 
-4. **V1-P8 : Packaging** — Ajouter un `docker-compose.yml` racine (ou symlink), creer `docker-compose.dev.yml`, corriger la ref dans deployment.md.
-5. **V3-P5 : Auth forms** — Connecter `verify_credentials` dans AuthMiddleware ou supprimer le mode `forms` ; ajouter une page de login frontend.
-6. **V1-P6 : WebSocket live refresh** — Les events `sync_complete` sont broadcastes mais le frontend ne les utilise pas pour rafraichir les donnees.
-7. **V2-P1 : Quality profiles / root folders** — Ajouter les appels API et la synchronisation en base.
-
-### Priorite basse (polish)
-
-8. **V1-P9 / V3-P9 : Validation reelle** — Deployer sur Unraid et tester avec la bibliotheque complete.
-9. **Tests frontend** — Ajouter des tests pour les pages principales (SummaryPage, MoviesPage, ShowsPage).
+1. **V1-P9 / V3-P9 : Validation reelle** — Valider le comportement avec la bibliotheque Plex/Radarr/Sonarr complete sur Unraid et decider du passage en production.
