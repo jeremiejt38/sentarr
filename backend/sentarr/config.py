@@ -66,6 +66,7 @@ class Settings(BaseSettings):
 
     # Application
     database_url: str = "sqlite:///app/data/sentarr.db"
+    scheduler_database_url: str | None = None
     log_level: str = "INFO"
     poll_interval_seconds: int = 60
     log_tail_interval_seconds: int = 5
@@ -98,6 +99,15 @@ class Settings(BaseSettings):
         path = Path(self.database_url.replace("sqlite:///", "").replace("sqlite://", "")).parent
         path.mkdir(parents=True, exist_ok=True)
         return path
+
+    @property
+    def resolved_scheduler_database_url(self) -> str:
+        if self.scheduler_database_url:
+            return self.scheduler_database_url
+        if self.database_url.startswith("sqlite:///"):
+            path = Path(self.database_url.replace("sqlite:///", ""))
+            return f"sqlite:///{path.parent / 'scheduler.db'}"
+        return self.database_url
 
     @property
     def parsed_plex_servers(self) -> list[dict[str, Any]]:

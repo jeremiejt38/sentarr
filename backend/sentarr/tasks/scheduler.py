@@ -15,14 +15,22 @@ from sentarr.collectors.bazarr_sync import sync_bazarr
 from sentarr.collectors.plex_api import sync_libraries
 from sentarr.collectors.plex_log_parser import parse_log_directory
 from sentarr.config import settings
-from sentarr.db import engine
+from sentarr.db import engine, make_engine
 
 logger = logging.getLogger(__name__)
 
+_sync_lock = asyncio.Lock()
+
 
 async def _run_sync[T](func: Callable[[], T]) -> T:
-    """Offload a synchronous, DB-touching task to a thread."""
-    return await asyncio.to_thread(func)
+    """Offload a synchronous, DB-touching task to a thread.
+
+    A single lock serializes sync jobs so that the SQLite write transaction
+    never overlaps with another sync transaction, which is the common cause of
+    ``database is locked`` errors under APScheduler + multi-threaded syncs.
+    """
+    async with _sync_lock:
+        return await asyncio.to_thread(func)
 
 
 async def sync_plex_job() -> None:
@@ -119,7 +127,10 @@ async def _dispatch(job: Callable[[], Any]) -> None:
 
 
 def start_scheduler() -> AsyncIOScheduler:
-    jobstores = {"default": SQLAlchemyJobStore(engine=engine)}
+    # Keep scheduler state on its own database so that APScheduler ticks are not
+    # blocked by long-running application sync transactions.
+    scheduler_engine = make_engine(settings.resolved_scheduler_database_url, echo=False)
+    jobstores = {"default": SQLAlchemyJobStore(engine=scheduler_engine)}
     scheduler = AsyncIOScheduler(jobstores=jobstores)
     scheduler.add_job(
         _dispatch,
