@@ -227,14 +227,15 @@ def _sync_server_libraries(
 
 def _propagate_all(session: Session) -> None:
     """Recalculate overall_status and progress for all tracked items."""
+    # Propagate leaves first so parent aggregations use up-to-date child values.
     for movie in session.exec(select(Movie)).all():
         propagate_movie(session, movie)
-    for show in session.exec(select(Show)).all():
-        propagate_show(session, show)
-    for season in session.exec(select(Season)).all():
-        propagate_season(session, season)
     for episode in session.exec(select(Episode)).all():
         propagate_episode(session, episode)
+    for season in session.exec(select(Season)).all():
+        propagate_season(session, season)
+    for show in session.exec(select(Show)).all():
+        propagate_show(session, show)
 
     session.commit()
 
