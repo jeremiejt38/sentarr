@@ -98,6 +98,8 @@ def start_scheduler() -> AsyncIOScheduler:
         id="plex_sync",
         replace_existing=True,
         max_instances=1,
+        misfire_grace_time=300,
+        coalesce=True,
         args=(sync_plex_job,),
     )
     scheduler.add_job(
@@ -107,6 +109,8 @@ def start_scheduler() -> AsyncIOScheduler:
         id="plex_log_parse",
         replace_existing=True,
         max_instances=1,
+        misfire_grace_time=300,
+        coalesce=True,
         args=(parse_plex_logs_job,),
     )
     scheduler.add_job(
@@ -116,6 +120,8 @@ def start_scheduler() -> AsyncIOScheduler:
         id="arr_sync",
         replace_existing=True,
         max_instances=1,
+        misfire_grace_time=300,
+        coalesce=True,
         args=(sync_arr_job,),
     )
     scheduler.add_job(
@@ -125,6 +131,8 @@ def start_scheduler() -> AsyncIOScheduler:
         id="alert_engine",
         replace_existing=True,
         max_instances=1,
+        misfire_grace_time=300,
+        coalesce=True,
         args=(evaluate_alerts_job,),
     )
     scheduler.add_job(
@@ -134,6 +142,8 @@ def start_scheduler() -> AsyncIOScheduler:
         id="bazarr_sync",
         replace_existing=True,
         max_instances=1,
+        misfire_grace_time=300,
+        coalesce=True,
         args=(sync_bazarr_job,),
     )
     scheduler.add_job(
@@ -143,6 +153,8 @@ def start_scheduler() -> AsyncIOScheduler:
         id="analytics_snapshot",
         replace_existing=True,
         max_instances=1,
+        misfire_grace_time=300,
+        coalesce=True,
         args=(analytics_snapshot_job,),
     )
     scheduler.start()
