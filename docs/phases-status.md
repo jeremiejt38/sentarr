@@ -16,7 +16,7 @@
 | 6 | Frontend | DONE | SummaryPage, MoviesPage, ShowsPage, AcquisitionPage, SettingsPage, Timeline. WebSocket rafraichit automatiquement les pages de donnees via un evenement global. |
 | 7 | Gestion erreurs | DONE | `health/anomalies.py` (doublons + mal identifies), mode degrade Plex, SQLAlchemyJobStore. |
 | 8 | Packaging final | DONE | Dockerfile multi-stage, `docker-compose.yml` racine, `docker-compose.dev.yml`, `docker-compose.staging.yml`, `docker-compose.postgres.yml`, dossiers `traefik/`, `prometheus/`, `grafana/`, `.env.example`, docs/deployment.md. |
-| 9 | Validation | **PARTIAL** | Deploiement staging sur Unraid OK, 100 tests backend, tests frontend pages principales. **Manque** : validation comportementale avec la bibliotheque reelle Plex/Radarr/Sonarr. |
+| 9 | Validation | **PARTIAL** | Deploiement staging sur Unraid OK, 100 tests backend, tests frontend pages principales. Validation comportementale lancee sur la bibliotheque Plex reelle (bibliotheque "Emissions TV"). **Manque** : validation sur l'ensemble des bibliotheques + chaine Radarr/Sonarr en conditions reelles. |
 
 **Score V1 : 9/10 DONE, 1/10 PARTIAL, 0 NOT STARTED**
 
@@ -54,7 +54,7 @@
 | 6 | Notifications (F1) | DONE | Apprise multi-canaux, /api/v1/notifications/test, config JSON. |
 | 7 | Prometheus/Grafana (F2) | DONE | /metrics endpoint, 5 metriques custom, dashboard Grafana 10 panels, Prometheus dans docker-compose. |
 | 8 | Ouverture communautaire (G) | DONE | README_EN.md, systeme de plugins (SentarrPlugin + PluginManager + 7 hooks), docs/plugins.md, unraid-template.xml. |
-| 9 | Validation finale | **PARTIAL** | Deploiement staging Unraid OK, health check / Traefik passent. Validation avec bibliotheque reelle en cours. |
+| 9 | Validation finale | **PARTIAL** | Deploiement staging Unraid OK, health check / Traefik passent. Validation avec bibliotheque Plex reelle en cours (module V1). **Manque** : validation chaine d'acquisition et extensions V2/V3 en conditions reelles. |
 
 **Score V3 : 9/10 DONE, 1/10 PARTIAL, 0 NOT STARTED**
 
@@ -73,6 +73,21 @@
 
 ---
 
+## Retours de validation (2026-08-31)
+
+Le redeploiement sur la bibliotheque Plex reelle a mis en lumiere et permis de corriger deux problemes de concurrence/stabilité :
+
+1. **Scheduler bloquant l'event loop** — Les syncs synchrones tournaient sur la boucle asyncio, bloquant l'API et les autres jobs. Corrige en delestant chaque sync dans un thread via `asyncio.to_thread`.
+2. **Contention SQLite (`database is locked`)** — Apres la mise en threads, le job store APScheduler et les workers syncs ecrivaient concurremment sur la meme base SQLite. Corrige par :
+   - activation du mode WAL et `busy_timeout=30s` sur le moteur SQLite ;
+   - isolation du job store APScheduler dans une base dediee ;
+   - serialisation des syncs planifies par un `asyncio.Lock` pour eviter deux transactions d'ecriture simultanees.
+3. **Propagation parent/enfant** — `_propagate_all` dans le sync Plex propagait les shows puis les saisons puis les episodes, ce qui faisait heriter les saisons d'une valeur de progression obsolete (ex. 82% alors que tous les episodes etaient `pending`). Corrige en propagant les feuilles (films/episodes) avant les parents (saisons/shows).
+
+Le conteneur `sentarr-staging` est stable (memoire ~180MiB, CPU < 1% entre les syncs, pas d'erreur `database is locked`).
+
+---
+
 ## Elements restants a traiter (par priorite)
 
 ### Priorite haute
@@ -81,4 +96,4 @@ Aucun element critique identifie. Toutes les phases documentees V1/V2/V3 sont im
 
 ### Priorite basse (polish / validation)
 
-1. **V1-P9 / V3-P9 : Validation reelle** — Valider le comportement avec la bibliotheque Plex/Radarr/Sonarr complete sur Unraid et decider du passage en production.
+1. **V1-P9 / V3-P9 : Validation reelle** — Valider le comportement avec la bibliotheque Plex/Radarr/Sonarr complete sur Unraid et decider du passage en production. Pour le moment seule la bibliotheque "Emissions TV" est active en staging ; les instances Radarr/Sonarr ne sont pas configurees dans `.env.staging`.
