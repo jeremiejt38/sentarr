@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from collections.abc import Callable
 from typing import Any
@@ -19,11 +20,20 @@ from sentarr.db import engine
 logger = logging.getLogger(__name__)
 
 
+async def _run_sync[T](func: Callable[[], T]) -> T:
+    """Offload a synchronous, DB-touching task to a thread."""
+    return await asyncio.to_thread(func)
+
+
 async def sync_plex_job() -> None:
     logger.info("Starting scheduled Plex sync")
     try:
-        with Session(engine) as session:
-            sync_libraries(session)
+
+        def _sync() -> None:
+            with Session(engine) as session:
+                sync_libraries(session)
+
+        await _run_sync(_sync)
         await broadcast({"type": "sync_complete", "source": "plex"})
     except Exception:
         logger.exception("Plex sync failed")
@@ -32,9 +42,13 @@ async def sync_plex_job() -> None:
 async def parse_plex_logs_job() -> None:
     logger.info("Starting scheduled Plex log parsing")
     try:
-        with Session(engine) as session:
-            count = parse_log_directory(session)
-            logger.info("Parsed %s log lines", count)
+
+        def _parse() -> int:
+            with Session(engine) as session:
+                return parse_log_directory(session)
+
+        count = await _run_sync(_parse)
+        logger.info("Parsed %s log lines", count)
         if count:
             await broadcast({"type": "sync_complete", "source": "plex_logs", "count": count})
     except Exception:
@@ -44,9 +58,13 @@ async def parse_plex_logs_job() -> None:
 async def sync_arr_job() -> None:
     logger.info("Starting scheduled *arr sync")
     try:
-        with Session(engine) as session:
-            sync_acquisition(session)
-            logger.info("*arr sync completed")
+
+        def _sync() -> None:
+            with Session(engine) as session:
+                sync_acquisition(session)
+                logger.info("*arr sync completed")
+
+        await _run_sync(_sync)
         await broadcast({"type": "sync_complete", "source": "arr"})
     except Exception:
         logger.exception("*arr sync failed")
@@ -55,9 +73,13 @@ async def sync_arr_job() -> None:
 async def evaluate_alerts_job() -> None:
     logger.info("Starting alert evaluation")
     try:
-        with Session(engine) as session:
-            count = len(evaluate_alerts(session))
-            logger.info("Created %s alerts", count)
+
+        def _eval() -> int:
+            with Session(engine) as session:
+                return len(evaluate_alerts(session))
+
+        count = await _run_sync(_eval)
+        logger.info("Created %s alerts", count)
         if count:
             await broadcast({"type": "alerts_created", "count": count})
     except Exception:
@@ -67,9 +89,13 @@ async def evaluate_alerts_job() -> None:
 async def sync_bazarr_job() -> None:
     logger.info("Starting Bazarr sync")
     try:
-        with Session(engine) as session:
-            count = sync_bazarr(session)
-            logger.info("Synced %s subtitle tracks", count)
+
+        def _sync() -> int:
+            with Session(engine) as session:
+                return sync_bazarr(session)
+
+        count = await _run_sync(_sync)
+        logger.info("Synced %s subtitle tracks", count)
     except Exception:
         logger.exception("Bazarr sync failed")
 
@@ -77,9 +103,13 @@ async def sync_bazarr_job() -> None:
 async def analytics_snapshot_job() -> None:
     logger.info("Starting analytics snapshot")
     try:
-        with Session(engine) as session:
-            take_snapshot(session)
-            purge_old_log_events(session)
+
+        def _snapshot() -> None:
+            with Session(engine) as session:
+                take_snapshot(session)
+                purge_old_log_events(session)
+
+        await _run_sync(_snapshot)
     except Exception:
         logger.exception("Analytics snapshot failed")
 
