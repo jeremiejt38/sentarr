@@ -52,3 +52,5 @@ logs/
 secrets/
 backend/sentarr/static
 backend/static
+ARIANE.md
+HANDOFF.md
