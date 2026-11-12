@@ -26,7 +26,7 @@ En V2, une URL webhook configurable (`WEBHOOK_URL`) permet de brancher un canal 
     "source": "radarr-4k"
   },
   "message": "Le téléchargement d'Inception (2010) est bloqué depuis 35 minutes.",
-  "url": "https://sentarr.example.invalid/acquisition/45",
+  "url": "https://sentarr.<lan-domain>/acquisition/45",
   "timestamp": "2026-08-15T10:30:00Z"
 }
 ```
@@ -48,7 +48,7 @@ Variable d'environnement `NOTIFICATION_CHANNELS` :
 ```bash
 NOTIFICATION_CHANNELS='[
   {"name": "discord", "url": "discord://webhook_id/webhook_token", "events": ["alert_triggered"]},
-  {"name": "ntfy", "url": "ntfy://ntfy.example.invalid/sentarr", "events": ["alert_triggered", "alert_resolved"]},
+  {"name": "ntfy", "url": "ntfy://ntfy.<lan-domain>/sentarr", "events": ["alert_triggered", "alert_resolved"]},
   {"name": "email", "url": "mailtos://user:pass@gmail.com", "events": ["alert_triggered"]}
 ]'
 ```

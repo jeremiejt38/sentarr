@@ -16,7 +16,7 @@ Les détails complets du réseau, des hôtes et des services se trouvent dans le
 | Attribut | Valeur |
 |----------|--------|
 | Hôte | `unraid` (alias SSH) |
-| IP LAN | `192.168.1.1` |
+| IP LAN | `<lan-ip>` |
 | Rôle | Docker, Traefik, Plex, Radarr, Sonarr, Bazarr, Prowlarr, etc. |
 | Réseau Docker principal | `plex-backend` |
 | Accès SSH | Préconfiguré via clé/agent, pas de mot de passe interactif |
@@ -28,7 +28,7 @@ Les détails complets du réseau, des hôtes et des services se trouvent dans le
 | Conteneur Docker | `plex` |
 | Image | `lscr.io/linuxserver/plex` |
 | URL interne (Docker) | `http://plex:32400` |
-| URL LAN | `http://192.168.1.1:32400` |
+| URL LAN | `http://<lan-ip>:32400` |
 | Domaine Traefik | `plex.<lan-domain>` |
 | Volume config hôte | `/mnt/user/appdata/plex` → `/config` dans le conteneur |
 | Fichier de log principal | `/mnt/user/appdata/plex/Library/Application Support/Plex Media Server/Logs/Plex Media Server.log` |

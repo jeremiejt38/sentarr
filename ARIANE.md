@@ -10,7 +10,7 @@
 | Status | **paused** |
 | Focus lane | no |
 | Atlas fiche | `~/workspace/atlas/projects/sentarr.md` |
-| Ariane web | https://ariane.example.invalid/projects/sentarr |
+| Ariane web | https://ariane.<lan-domain>/projects/sentarr |
 
 ## Directive
 

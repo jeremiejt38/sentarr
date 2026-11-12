@@ -301,7 +301,7 @@ services:
 
 ### Traefik Integration
 
-The included `docker-compose.yml` has Traefik labels pre-configured for `sentarr.example.invalid`.
+The included `docker-compose.yml` has Traefik labels pre-configured for `sentarr.<lan-domain>`.
 
 ### Health Check
 

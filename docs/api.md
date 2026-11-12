@@ -10,8 +10,8 @@
 ## Base URL
 
 ```
-https://sentarr.example.invalid/api
-ws://sentarr.example.invalid/ws   (upgrade vers WebSocket)
+https://sentarr.<lan-domain>/api
+ws://sentarr.<lan-domain>/ws   (upgrade vers WebSocket)
 ```
 
 ## Endpoints V1

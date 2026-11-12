@@ -5,11 +5,11 @@
 ## Modèles et endpoint Ollama
 
 - Modèle rapide/lent local : `ollama/qwen2.5-coder:14b`.
-- Endpoint Ollama : `http://10.0.0.1:11434` (via VPN AkashaVPN), configuré dans `~/.talos/.env`.
-- Chaîne de fallback automatique si 10.0.0.1 ne répond pas :
-  1. `10.0.0.1:11434`
-  2. `192.168.1.100:11434`
-  3. `192.168.1.16:11434`
+- Endpoint Ollama : `http://<vpn-ip>:11434` (via VPN AkashaVPN), configuré dans `~/.talos/.env`.
+- Chaîne de fallback automatique si <vpn-ip> ne répond pas :
+  1. `<vpn-ip>:11434`
+  2. `<lan-ip>:11434`
+  3. `<lan-ip>:11434`
   4. `127.0.0.1:11434` (dernier recours)
 - Le premier endpoint sain est sélectionné avec un cache de 30 s.
 - Format d'édition Aider : `diff` (SEARCH/REPLACE), activé dans `~/.aider.conf.yml`.
@@ -42,7 +42,7 @@
 
 ## Vérification pré-job
 
-- [ ] VPN AkashaVPN actif (ping `10.0.0.1`).
+- [ ] VPN AkashaVPN actif (ping `<vpn-ip>`).
 - [ ] Ollama répond (`ollama list` via le endpoint configuré).
 - [ ] Le modèle `qwen2.5-coder:14b` est disponible.
 - [ ] Le prompt est atomique, isolé et inclut la validation attendue.

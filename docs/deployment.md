@@ -2,9 +2,9 @@
 
 ## Cible principale
 
-- Serveur **Unraid** (`192.168.1.1`), conteneur Docker unique ou stack `docker-compose`.
+- Serveur **Unraid** (`<lan-ip>`), conteneur Docker unique ou stack `docker-compose`.
 - Réseau Docker : `plex-backend` (même réseau que Plex, Radarr, Sonarr, etc.).
-- Exposition privée via Traefik : `sentarr.example.invalid`.
+- Exposition privée via Traefik : `sentarr.<lan-domain>`.
 - Pas d'ouverture WAN directe.
 
 ## Prérequis
@@ -40,7 +40,7 @@ services:
       - /mnt/user/appdata/plex/Library/Application Support/Plex Media Server/Logs/Plex Media Server.log:/var/log/plex/Plex Media Server.log:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.sentarr.rule=Host(`sentarr.example.invalid`)"
+      - "traefik.http.routers.sentarr.rule=Host(`sentarr.<lan-domain>`)"
       - "traefik.http.routers.sentarr.entrypoints=http,https"
       - "traefik.http.routers.sentarr.priority=1000"
       - "traefik.http.routers.sentarr.middlewares=private-network"
@@ -145,7 +145,7 @@ Variables : `PLEX_TOKEN`, `PLEX_LOG_PATH`, `POLL_INTERVAL_SECONDS`, `RADARR_URLS
 
 ## Intégration Traefik
 
-Aucune configuration statique nécessaire si le provider Docker est actif et que les labels ci-dessus sont appliqués. Le wildcard `*.example.invalid` est déjà géré par OPNsense Unbound.
+Aucune configuration statique nécessaire si le provider Docker est actif et que les labels ci-dessus sont appliqués. Le wildcard `*.<lan-domain>` est déjà géré par OPNsense Unbound.
 
 Redémarrage de Traefik si nécessaire :
 
@@ -176,4 +176,4 @@ ssh unraid "docker exec sentarr curl -s http://localhost:8000/health"
 - `PLEX_TOKEN` en variable d'environnement, jamais dans l'image.
 - Log Plex monté en lecture seule (`:ro`).
 - Pas de binding du port applicatif sur l'hôte ; tout passe par Traefik.
-- Pas d'exposition WAN : `sentarr.example.invalid` résout localement via OPNsense.
+- Pas d'exposition WAN : `sentarr.<lan-domain>` résout localement via OPNsense.

@@ -8,7 +8,7 @@
 - [ ] Un épisode mal identifié (mauvaise saison/numéro) est visible comme cas d'erreur distinct.
 - [ ] Les statuts se mettent à jour sans intervention manuelle (polling API Plex + lecture continue des logs).
 - [ ] Le service redémarre proprement sans perdre l'historique déjà collecté (SQLite/PostgreSQL persistant via volume).
-- [ ] L'outil tourne en conteneur Docker intégré au reverse proxy Traefik existant sur `sentarr.example.invalid`.
+- [ ] L'outil tourne en conteneur Docker intégré au reverse proxy Traefik existant sur `sentarr.<lan-domain>`.
 - [ ] Aucune action d'écriture n'est possible sur le serveur Plex depuis Sentarr (lecture seule API + logs).
 - [ ] Les tâches non applicables sont marquées comme `not_applicable` et affichées comme telles (non masquées par défaut).
 - [ ] Les lignes de log Plex non reconnues sont comptabilisées et accessibles dans la vue synthèse.

@@ -12,8 +12,8 @@ Ce document reprend les questionnaires des cahiers des charges V1, V2 et V3, ave
 
 **Réponse** :
 - URL interne Docker : `http://plex:32400` (même réseau `plex-backend`).
-- URL LAN : `http://192.168.1.1:32400`.
-- Domaine Traefik : `https://plex.example.invalid`.
+- URL LAN : `http://<lan-ip>:32400`.
+- Domaine Traefik : `https://plex.<lan-domain>`.
 - Token : `PlexOnlineToken` extrait de `/config/Library/Application Support/Plex Media Server/Preferences.xml` dans le conteneur `plex`.
 - Livraison : variable d'environnement `PLEX_TOKEN` au déploiement, jamais versionnée.
 
@@ -55,7 +55,7 @@ Ce document reprend les questionnaires des cahiers des charges V1, V2 et V3, ave
 **Question** : Réseau Docker et sous-domaine Traefik souhaités.
 
 **Réponse** :
-- Sous-domaine : `sentarr.example.invalid`.
+- Sous-domaine : `sentarr.<lan-domain>`.
 - Réseau Docker : `plex-backend`.
 - Middleware Traefik : `private-network`.
 

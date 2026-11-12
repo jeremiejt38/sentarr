@@ -38,7 +38,7 @@ Ce document consigne les utilisations de Talos sur le projet Sentarr : prompts, 
 
 ## Entrées
 
-## 2026-08-15 — Smoke test via VPN (10.0.0.1)
+## 2026-08-15 — Smoke test via VPN (<vpn-ip>)
 
 - **Job ID** : `12ab4477`
 - **Label** : `talos-smoke-test-vpn`
@@ -53,12 +53,12 @@ Créer un petit fichier `hello.py` contenant une fonction `greet(name: str) -> s
 
 ### Diagnostic
 
-- Le VPN n'était effectivement pas démarré lors du premier test (`ping 10.0.0.1` à 100% de perte).
-- Une fois le VPN actif, `10.0.0.1` a répondu et Ollama a listé ses modèles (`qwen3:8b`, `qwen3-coder:latest`, `qwen2.5-coder`, etc.).
+- Le VPN n'était effectivement pas démarré lors du premier test (`ping <vpn-ip>` à 100% de perte).
+- Une fois le VPN actif, `<vpn-ip>` a répondu et Ollama a listé ses modèles (`qwen3:8b`, `qwen3-coder:latest`, `qwen2.5-coder`, etc.).
 
 ### Corrections appliquées
 
-- `OLLAMA_API_BASE=http://10.0.0.1:11434` a été ajouté à `~/.talos/.env` pour que les prochains jobs utilisent le bon endpoint.
+- `OLLAMA_API_BASE=http://<vpn-ip>:11434` a été ajouté à `~/.talos/.env` pour que les prochains jobs utilisent le bon endpoint.
 
 ### Évaluation
 
@@ -177,7 +177,7 @@ Test de l'intégration du coût monétaire et du `tokens received` dans `talos/c
 ### Ce qui fonctionne ✅
 
 - Daemon Talos démarre et communique via CLI et MCP.
-- Ollama distant (`10.0.0.1`) est joignable via VPN.
+- Ollama distant (`<vpn-ip>`) est joignable via VPN.
 - `qwen2.5-coder:14b` rentre dans 12 Go de VRAM avec 32 768 tokens de contexte.
 - Format d'édition SEARCH/REPLACE activé (`edit-format: diff` dans `~/.aider.conf.yml`).
 - Sandbox actif par défaut, pas d'écriture directe sur le repo (`TALOS_AUTO_APPLY=false`).
@@ -274,8 +274,8 @@ Test de l'intégration du coût monétaire et du `tokens received` dans `talos/c
 ### Configuration Ollama
 
 - Initialement `OLLAMA_API_BASE=http://127.0.0.1:11434` (hôte local, fallback).
-- Après mise en ligne des hôtes distants par l'utilisateur, reconfiguration en `http://10.0.0.1:11434`.
-- Daemon Talos redémarré avec `OLLAMA_API_BASE=http://10.0.0.1:11434` pour les nouveaux jobs.
+- Après mise en ligne des hôtes distants par l'utilisateur, reconfiguration en `http://<vpn-ip>:11434`.
+- Daemon Talos redémarré avec `OLLAMA_API_BASE=http://<vpn-ip>:11434` pour les nouveaux jobs.
 - Correction de `validate_cmd` : utiliser `PYTHONPATH=backend /home/jerem/workspace/sentarr/backend/.venv/bin/python -m pytest ...` car le venv du projet est nécessaire pour importer `sentarr`, et `uv run` ne fonctionne pas dans le sandbox.
 
 ### Travail en parallèle

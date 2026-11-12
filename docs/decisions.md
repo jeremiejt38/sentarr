@@ -40,9 +40,9 @@
 
 | Sujet | Décision |
 |-------|----------|
-| Hôte principal | Unraid (`192.168.1.1`). |
+| Hôte principal | Unraid (`<lan-ip>`). |
 | Réseau Docker | `plex-backend` (même que Plex). |
-| Exposition | `sentarr.example.invalid` via Traefik Unraid, middleware `private-network`. |
+| Exposition | `sentarr.<lan-domain>` via Traefik Unraid, middleware `private-network`. |
 | Image | Backend + frontend dans un seul conteneur multi-stage. |
 | Healthcheck | Endpoint `/health` interne. |
 
@@ -71,7 +71,7 @@
 2. **Bibliothèques** : toutes automatiquement.
 3. **Fréquence/rétention** : laissé au choix technique → 60s polling, 30j rétention par défaut, ajustable via env.
 4. **Rétro-scan** : complet.
-5. **Déploiement** : `sentarr.example.invalid`, SQLite V1 avec migration PostgreSQL possible.
+5. **Déploiement** : `sentarr.<lan-domain>`, SQLite V1 avec migration PostgreSQL possible.
 6. **Interface** : thème sombre *arr, log brut accessible.
 7. **Tâches non applicables** : détection Plex Pass pour activer/désactiver les marqueurs intro.
 
