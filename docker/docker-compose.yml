@@ -26,7 +26,7 @@ services:
       - ${PLEX_LOG_HOST_PATH:-/mnt/user/appdata/plex/Library/Application Support/Plex Media Server/Logs}:/var/log/plex:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.sentarr.rule=Host(`sentarr.example.invalid`)"
+      - "traefik.http.routers.sentarr.rule=Host(`sentarr.<lan-domain>`)"
       - "traefik.http.routers.sentarr.entrypoints=https"
       - "traefik.http.routers.sentarr.tls.certresolver=cloudflare"
       - "traefik.http.routers.sentarr.middlewares=private-network@file"
@@ -57,7 +57,7 @@ services:
       - grafana-data:/var/lib/grafana
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.sentarr-grafana.rule=Host(`grafana.example.invalid`)"
+      - "traefik.http.routers.sentarr-grafana.rule=Host(`grafana.<lan-domain>`)"
       - "traefik.http.routers.sentarr-grafana.entrypoints=https"
       - "traefik.http.routers.sentarr-grafana.tls.certresolver=cloudflare"
       - "traefik.http.routers.sentarr-grafana.middlewares=private-network@file"

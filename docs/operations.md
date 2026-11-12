@@ -29,7 +29,7 @@ Les détails complets du réseau, des hôtes et des services se trouvent dans le
 | Image | `lscr.io/linuxserver/plex` |
 | URL interne (Docker) | `http://plex:32400` |
 | URL LAN | `http://192.168.1.1:32400` |
-| Domaine Traefik | `plex.example.invalid` |
+| Domaine Traefik | `plex.<lan-domain>` |
 | Volume config hôte | `/mnt/user/appdata/plex` → `/config` dans le conteneur |
 | Fichier de log principal | `/mnt/user/appdata/plex/Library/Application Support/Plex Media Server/Logs/Plex Media Server.log` |
 | État constaté | Up healthy (44+ heures au moment de la collecte) |
@@ -74,12 +74,12 @@ Les clés API doivent être extraites au moment du déploiement V2/V3 et passée
 
 | Attribut | Valeur |
 |----------|--------|
-| Domaine | `sentarr.example.invalid` |
+| Domaine | `sentarr.<lan-domain>` |
 | Type d'accès | Privé (LAN/VPN via OPNsense Unbound) |
 | Middlewares prévus | `private-network` (éventuellement `authelia` plus tard) |
 | Backend | `http://sentarr:8000` sur le réseau `plex-backend` |
 
-Aucune entrée DNS publique n'est nécessaire : le wildcard `*.example.invalid` est géré par l'override Unbound d'OPNsense.
+Aucune entrée DNS publique n'est nécessaire : le wildcard `*.<lan-domain>` est géré par l'override Unbound d'OPNsense.
 
 ## Volumétrie du stockage média
 
@@ -94,7 +94,7 @@ Aucune entrée DNS publique n'est nécessaire : le wildcard `*.example.invalid` 
 
 ## Réseau et sécurité
 
-- `sentarr.example.invalid` ne sera accessible que depuis le LAN maison ou le VPN AkashaVPN.
+- `sentarr.<lan-domain>` ne sera accessible que depuis le LAN maison ou le VPN AkashaVPN.
 - Aucune exposition publique WAN prévue en V1.
 - En V3, si ouverture communautaire du repo, aucune URL, IP, token ou credential spécifique à cette infrastructure ne doit apparaître dans le code ou la documentation publique.
 

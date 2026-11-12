@@ -23,7 +23,7 @@ Donner au gestionnaire d'un serveur Plex (homelab) une vue claire de l'état d'a
 - **Base de données** : SQLite par défaut en V1, migration transparente vers PostgreSQL possible.
 - **Intégration *arr** : connecteurs read-only Radarr/Sonarr (V2), clients de téléchargement qBittorrent/Transmission, API versionnée `/api/v1/arr`.
 - **Monitoring V3** : export Prometheus `/metrics` + dashboards Grafana.
-- **Déploiement** : Docker / docker-compose sur Unraid, exposé via Traefik sur `sentarr.example.invalid`.
+- **Déploiement** : Docker / docker-compose sur Unraid, exposé via Traefik sur `sentarr.<lan-domain>`.
 
 ## Démarrage rapide
 
