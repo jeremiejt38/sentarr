@@ -135,6 +135,7 @@ export function AcquisitionPage() {
             <th>Type</th>
             <th>Statut</th>
             <th>Progression</th>
+            <th>Dernière activité</th>
           </tr>
         </thead>
         <tbody>
@@ -155,6 +156,7 @@ export function AcquisitionPage() {
               <td>
                 <ProgressBar value={item.download_progress ?? STATUS_PROGRESS[item.status] ?? 0} />
               </td>
+              <td>{new Date(item.updated_at).toLocaleString()}</td>
             </tr>
           ))}
         </tbody>
