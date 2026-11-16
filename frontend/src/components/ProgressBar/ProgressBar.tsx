@@ -1,13 +1,23 @@
-import './progress-bar.css';
+import styles from './ProgressBar.module.css';
 
-export function ProgressBar({ value, label }: { value: number; label?: string }) {
-  const safe = Math.max(0, Math.min(100, value));
+type Props = { value: number; label?: string; indeterminate?: boolean };
+
+export function ProgressBar({ value, label, indeterminate = false }: Props) {
+  const safe = Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0));
+  const text = label ?? `${safe}%`;
   return (
-    <div className="progress" aria-label={label ?? `${safe}%`}>
-      <div className="progress__track">
-        <div className="progress__value" style={{ width: `${safe}%` }} />
+    <div className={styles.progress}>
+      <div
+        className={styles.track}
+        role="progressbar"
+        aria-label={label ?? 'Progression'}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        {...(indeterminate ? {} : { 'aria-valuenow': safe })}
+      >
+        <div className={styles.value} style={indeterminate ? { width: '40%' } : { width: `${safe}%` }} />
       </div>
-      <span>{label ?? `${safe}%`}</span>
+      <span>{text}</span>
     </div>
   );
 }

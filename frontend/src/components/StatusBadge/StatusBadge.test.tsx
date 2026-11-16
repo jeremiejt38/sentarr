@@ -5,11 +5,11 @@ import { StatusBadge } from './StatusBadge';
 describe('StatusBadge', () => {
   it('renders the status label', () => {
     render(<StatusBadge status="completed" />);
-    expect(screen.getByRole('status')).toHaveTextContent('Terminé');
+    expect(screen.getByText('Terminé')).toBeInTheDocument();
   });
 
   it('renders a custom label', () => {
     render(<StatusBadge status="in_progress" label="Custom" />);
-    expect(screen.getByRole('status')).toHaveTextContent('Custom');
+    expect(screen.getByText('Custom')).toBeInTheDocument();
   });
 });

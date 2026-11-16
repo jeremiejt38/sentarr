@@ -1,0 +1,4 @@
+.progress { display: flex; align-items: center; gap: var(--space-2); color: var(--arr-muted); min-width: 0; }
+.track { flex: 1; height: 6px; overflow: hidden; border-radius: var(--radius-sm); background: var(--arr-border); }
+.value { height: 100%; border-radius: inherit; background: var(--arr-blue); transition: width var(--dur-base) var(--ease); }
+@media (prefers-reduced-motion: reduce) { .value { transition: none; } }
