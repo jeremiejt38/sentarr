@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { REFRESH_EVENT, TOAST_EVENT, useWebSocket } from '../lib/websocket';
+import { emitToast, REFRESH_EVENT, TOAST_EVENT, useWebSocket } from '../lib/websocket';
 import styles from './Layout.module.css';
 
 const LINKS: [string, string][] = [
@@ -27,11 +27,22 @@ const CONN_LABELS = {
 } as const;
 
 export function Layout() {
+  const refreshTimer = useRef<number | undefined>(undefined);
   const { status } = useWebSocket((message) => {
-    window.dispatchEvent(new CustomEvent(REFRESH_EVENT, { detail: message }));
+    const type = (message as { type?: string }).type;
+    if (type === 'new_alert') {
+      setAlertCount((c) => c + 1);
+      emitToast({ title: 'Nouvelle alerte' });
+    }
+    // WS-07 : patch local puis refetch débattu (≤ 1 requête / 2 s / entité, ici fenêtre globale).
+    window.clearTimeout(refreshTimer.current);
+    refreshTimer.current = window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent(REFRESH_EVENT, { detail: message }));
+    }, 2000);
   });
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSED_KEY) === '1');
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [alertCount, setAlertCount] = useState(0);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -77,8 +88,14 @@ export function Layout() {
               end={to === '/'}
               className={({ isActive }) => (isActive ? styles.active : undefined)}
               aria-label={collapsed ? label : undefined}
+              onClick={to === '/alerts' ? () => setAlertCount(0) : undefined}
             >
               <span className={styles.navLabel}>{label}</span>
+              {to === '/alerts' && alertCount > 0 && (
+                <span className={styles.alertBadge} aria-label={`${alertCount} nouvelle(s) alerte(s)`}>
+                  {alertCount}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>

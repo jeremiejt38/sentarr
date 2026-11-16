@@ -170,3 +170,20 @@
   font-size: var(--font-size-sm, 13px);
   margin-top: var(--space-1, 4px);
 }
+
+.alertBadge {
+  margin-left: auto;
+  background: var(--status-error-fg);
+  color: var(--status-error-bg);
+  border-radius: 999px;
+  padding: 0 var(--space-2, 8px);
+  font-size: var(--font-size-xs, 11px);
+  font-weight: 700;
+  min-width: 18px;
+  text-align: center;
+}
+
+.nav a {
+  display: flex;
+  align-items: center;
+}
