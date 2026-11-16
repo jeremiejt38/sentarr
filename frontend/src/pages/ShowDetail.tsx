@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { api } from '../lib/api.client';
 import { StatusBadge } from '../components/StatusBadge/StatusBadge';
 import type { AnyStatus } from '../lib/status';
+import { taskTypeLabel } from '../lib/labels.fr';
 import { ProgressBar } from '../components/ProgressBar/ProgressBar';
 import { Timeline } from '../components/Timeline/Timeline';
 import { TreeView } from '../components/TreeView/TreeView';
@@ -23,6 +24,7 @@ interface Season {
   season_number: number;
   overall_status: string;
   progress_percent: number;
+  tasks: { type: string; status: string }[];
   episodes: Episode[];
 }
 
@@ -61,12 +63,19 @@ export function ShowDetail() {
     label: `Saison ${season.season_number}`,
     status: season.overall_status as AnyStatus,
     progress: season.progress_percent,
-    children: season.episodes.map((episode) => ({
+    children: [
+      ...season.tasks.map((task) => ({
+        id: `task-${season.id}-${task.type}`,
+        label: taskTypeLabel(task.type),
+        status: task.status as AnyStatus,
+      })),
+      ...season.episodes.map((episode) => ({
       id: episode.id,
       label: `E${episode.episode_number} ${episode.title ?? ''}`,
       status: episode.overall_status as AnyStatus,
       progress: episode.progress_percent,
-    })),
+      })),
+    ],
   }));
 
   return (
