@@ -211,3 +211,26 @@ Exposition au format Prometheus des compteurs d'items par statut, du nombre d'al
 - `500 Internal Server Error` : erreur interne, loggée côté serveur.
 
 Les réponses d'erreur utilisent le schéma Pydantic `HTTPError` avec `detail`.
+
+## Endpoints V3 — Bazarr / Prowlarr / Auth
+
+Endpoints exposés sous `/api/v1/` (montés dans `main.py`).
+
+### Bazarr — sous-titres
+
+GET /api/v1/subtitles
+
+Retourne les événements de sous-titres issus de Bazarr (table `subtitle_events`).
+
+### Prowlarr — indexeurs
+
+GET /api/v1/indexers
+GET /api/v1/indexers/stats
+
+Retournent l'état des indexeurs Prowlarr (table `indexer_status`) et des agrégats de santé.
+
+### Auth — configuration et clés API
+
+GET  /api/v1/auth/config      # { "required": boolean }
+GET  /api/v1/auth/keys        # liste des clés API
+POST /api/v1/auth/keys        # création d'une clé API (201)
