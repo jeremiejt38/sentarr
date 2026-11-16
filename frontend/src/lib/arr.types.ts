@@ -27,7 +27,7 @@ export interface TimelineStep {
 }
 
 export interface TreeNode {
-  id: number;
+  id: number | string;
   label: string;
   status: AnyStatus;
   progress?: number;
