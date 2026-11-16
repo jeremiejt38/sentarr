@@ -152,6 +152,9 @@ Réponse : items en cours d'acquisition avec statut, progression, health score.
 ### Endpoints d'intégration *arr (versionnés)
 
 ```
+
+> **Statut** : les endpoints `/api/v1/arr/*` ci-dessous sont **planifiés (V3)** et ne sont pas encore implémentés — aucun router `arr` n'est monté dans `main.py`. L'agrégation acquisition actuelle passe par `GET /api/v1/acquisition` (non paginé : la pagination/virtualisation des listes longues est un chantier P2). La page Système (root folders, profils qualité) n'a pas d'UI dédiée à ce stade.
+
 GET /api/v1/arr/movies           # films issus de Radarr
 GET /api/v1/arr/movies/{id}
 GET /api/v1/arr/series           # séries issues de Sonarr
