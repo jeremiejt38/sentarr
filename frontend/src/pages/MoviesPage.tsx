@@ -4,6 +4,7 @@ import { api } from '../lib/api.client';
 import { useRefreshOnWebSocket } from '../lib/websocket';
 import { ProgressBar } from '../components/ProgressBar/ProgressBar';
 import { StatusBadge } from '../components/StatusBadge/StatusBadge';
+import type { AnyStatus } from '../lib/status';
 
 interface Movie {
   id: number;
@@ -79,7 +80,7 @@ export function MoviesPage() {
               <td>{movie.title}</td>
               <td>{movie.year ?? '-'}</td>
               <td>
-                <StatusBadge status={movie.overall_status as never} />
+                <StatusBadge status={movie.overall_status as AnyStatus} />
               </td>
               <td>
                 <ProgressBar value={movie.progress_percent} />

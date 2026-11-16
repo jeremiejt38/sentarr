@@ -1,3 +1,5 @@
+import type { AnyStatus } from './status';
+
 export type Status = 'pending' | 'in_progress' | 'completed' | 'error' | 'not_applicable';
 export type AcquisitionStatus =
   | 'queued'
@@ -18,7 +20,7 @@ export interface ArrItem {
 export interface TimelineStep {
   key: string;
   label: string;
-  status: Status | AcquisitionStatus;
+  status: AnyStatus;
   startedAt?: string;
   completedAt?: string;
   errorMessage?: string | null;
@@ -27,7 +29,7 @@ export interface TimelineStep {
 export interface TreeNode {
   id: number;
   label: string;
-  status: Status | AcquisitionStatus;
+  status: AnyStatus;
   progress?: number;
   children?: TreeNode[];
 }

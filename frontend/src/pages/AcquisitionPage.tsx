@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api.client';
 import { useRefreshOnWebSocket } from '../lib/websocket';
 import { StatusBadge } from '../components/StatusBadge/StatusBadge';
+import type { AnyStatus } from '../lib/status';
 import { ProgressBar } from '../components/ProgressBar/ProgressBar';
 import { Timeline } from '../components/Timeline/Timeline';
 import type { TimelineStep } from '../lib/arr.types';
@@ -149,7 +150,7 @@ export function AcquisitionPage() {
               <td>{sources[item.source_id] ?? item.source_id}</td>
               <td>{item.client_type}</td>
               <td>
-                <StatusBadge status={item.status as never} />
+                <StatusBadge status={item.status as AnyStatus} />
               </td>
               <td>
                 <ProgressBar value={item.download_progress ?? STATUS_PROGRESS[item.status] ?? 0} />

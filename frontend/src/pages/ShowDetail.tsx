@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../lib/api.client';
 import { StatusBadge } from '../components/StatusBadge/StatusBadge';
+import type { AnyStatus } from '../lib/status';
 import { ProgressBar } from '../components/ProgressBar/ProgressBar';
 import { Timeline } from '../components/Timeline/Timeline';
 import { TreeView } from '../components/TreeView/TreeView';
@@ -52,18 +53,18 @@ export function ShowDetail() {
   const steps: TimelineStep[] = show.tasks.map((task) => ({
     key: task.type,
     label: task.type,
-    status: task.status as never,
+    status: task.status as AnyStatus,
   }));
 
   const nodes: TreeNode[] = show.seasons.map((season) => ({
     id: season.id,
     label: `Saison ${season.season_number}`,
-    status: season.overall_status as never,
+    status: season.overall_status as AnyStatus,
     progress: season.progress_percent,
     children: season.episodes.map((episode) => ({
       id: episode.id,
       label: `E${episode.episode_number} ${episode.title ?? ''}`,
-      status: episode.overall_status as never,
+      status: episode.overall_status as AnyStatus,
       progress: episode.progress_percent,
     })),
   }));
@@ -73,7 +74,7 @@ export function ShowDetail() {
       <h1>{show.title}</h1>
       <div className="detail-meta">
         <span>Année : {show.year ?? '-'}</span>
-        <StatusBadge status={show.overall_status as never} />
+        <StatusBadge status={show.overall_status as AnyStatus} />
         <ProgressBar value={show.progress_percent} />
       </div>
       <h2>Pipeline</h2>
