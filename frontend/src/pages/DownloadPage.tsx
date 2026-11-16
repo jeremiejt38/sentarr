@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api.client';
 import { useRefreshOnWebSocket } from '../lib/websocket';
 import { StatusBadge } from '../components/StatusBadge/StatusBadge';
+import type { AnyStatus } from '../lib/status';
 import { ProgressBar } from '../components/ProgressBar/ProgressBar';
 
 interface Torrent {
@@ -59,7 +60,7 @@ export function DownloadPage() {
             <tr key={torrent.hash}>
               <td>{torrent.name}</td>
               <td>
-                <StatusBadge status={torrent.status as never} />
+                <StatusBadge status={torrent.status as AnyStatus} />
               </td>
               <td>
                 <ProgressBar value={torrent.progress} />

@@ -13,3 +13,20 @@ describe('StatusBadge', () => {
     expect(screen.getByText('Custom')).toBeInTheDocument();
   });
 });
+
+import { STATUS, type AnyStatus } from '../../lib/status';
+
+const ALL: AnyStatus[] = [
+  'pending', 'in_progress', 'completed', 'error', 'not_applicable',
+  'queued', 'downloading', 'imported', 'failed', 'unmatched',
+  'searching', 'found', 'missing', 'healthy', 'degraded', 'failing',
+];
+
+describe('StatusBadge — les 16 statuts (CMP-SB-01)', () => {
+  it.each(ALL)('affiche libellé + icône pour %s', (status) => {
+    const meta = STATUS[status];
+    render(<StatusBadge status={status} />);
+    expect(screen.getByText(meta.label)).toBeInTheDocument();
+    expect(screen.getByText(meta.icon)).toBeInTheDocument();
+  });
+});

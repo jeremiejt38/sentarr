@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../lib/api.client';
 import { StatusBadge } from '../components/StatusBadge/StatusBadge';
+import type { AnyStatus } from '../lib/status';
 import { ProgressBar } from '../components/ProgressBar/ProgressBar';
 import { Timeline } from '../components/Timeline/Timeline';
 import type { TimelineStep } from '../lib/arr.types';
@@ -43,7 +44,7 @@ export function MovieDetail() {
   const steps: TimelineStep[] = movie.tasks.map((task) => ({
     key: task.type,
     label: task.type,
-    status: task.status as never,
+    status: task.status as AnyStatus,
     startedAt: task.started_at ?? undefined,
     completedAt: task.completed_at ?? undefined,
     errorMessage: task.error_message ?? undefined,
@@ -54,7 +55,7 @@ export function MovieDetail() {
       <h1>{movie.title}</h1>
       <div className="detail-meta">
         <span>Année : {movie.year ?? '-'}</span>
-        <StatusBadge status={movie.overall_status as never} />
+        <StatusBadge status={movie.overall_status as AnyStatus} />
         <ProgressBar value={movie.progress_percent} />
       </div>
       {movie.path ? <div className="detail-path">{movie.path}</div> : null}
